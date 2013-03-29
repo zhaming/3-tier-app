@@ -1,117 +1,195 @@
 #!/usr/bin/python
+#coding:utf-8
 
 import os
 import MySQLdb
 import socket
 
 from bottle import get, post, run, CGIServer, request, redirect
+from jinja2 import Template
 
+CONFIG_PATH = '/var/config'
 MOUNTPOINT = '/cgi-bin/app.py'
 DB = 'test-db'
+VALUE_LENGTH = 200
+MYSQL_UNKNOWN_DB_CODE = 1049
 
-
-def get_credentials(path = "/var/config/"):
-    output = {}
-    for fname, key in (
-            ('mysql-master', 'master'),
-            ('mysql-slave', 'slave'),
-            ('mysql-username', 'username'),
-            ('mysql-password', 'password'),
-            ): 
-        with open(os.path.join(path, fname)) as f:
-            output[key] = f.read().strip()
-    return output
-
-
-FORM = """
+BASE_TEMPLATE = """
 <html>
-<head>
-<title>Scalr Demo</title>
-</head>
+    <head>
+        <title>Scalr Demo App</title>
+    </head>
     <body>
-    <h1>New Value (to master)</h1>
-    <form action="{0}" method="post">
-        <input name="value" type="text"/>
-        <input type="submit"/>
-
-        <h1>Read values (from slave)</h1>
-    {1}
-
-    <h1>Status</h1>
-    {2}
+    {% block body %}
+        <p>Warning: Missing Database Connection Info. Run SetMySQLParams.</p>
+    {% endblock body %}
+    <h1>Server Info</h1>
+    <ul>
+        <li>hostname: {{ hostname }}</li>
+    </ul>
     </body>
-</form>
 </html>
 """
 
-STATUS_TEMPLATE = """
+FORM_TEMPLATE = """
+{% extends base_template %}
+{% block body %}
+
+<h1>New Value (to master)</h1>
+
+<form action="{{ mountpoint }}" method="post">
+    <input name="value" type="text"/>
+    <input type="submit"/>
+</form>
+
+<h1>Read values (from slave)</h1>
+{% block data %}
+<p>Warning: no connection to the slave database could be established.</p>
+{% endblock data %}
+
+<h1>MySQL Status</h1>
 <ul>
-<li>username: {username}</li>
-<li>password: {password}</li>
-<li>master: {master}</li>
-<li>slave: {slave}</li>
-<li>replication: {status}</li>
+    <li>username: {{ connection_info.username }}</li>
+    <li>password: {{ connection_info.password }}</li>
+    <li>master:  {{ connection_info.master.hostname }} - {{ connection_info.master.ips() }}</li>
+    <li>slave:  {{ connection_info.slave.hostname }} - {{ connection_info.slave.ips() }}</li>
+    <li>replicating: {{ connection_info.replicating() }}</li>
 </ul>
 
+{% endblock body %}
 """
 
-def get_status():
-    credentials = get_credentials()
-    for host in ('master', 'slave'):
-        credentials[host] = socket.gethostbyname(credentials[host])
-    credentials['status'] = credentials['master'] != credentials['slave']
-    return STATUS_TEMPLATE.format(**credentials)
+CONNECTED_TEMPLATE = """
+{% extends form_template %}
 
-
-def get_cursor(master = True):
-    credentials = get_credentials()
-    username = credentials['username']
-    password = credentials['password']
-    if master:
-        host = credentials['master']
-    else:
-        host = credentials['slave']
-    connection = MySQLdb.connect(host = host, user = username, passwd = password)
-
-    cursor = connection.cursor()
-
-    if master:
-        cursor.execute('CREATE DATABASE IF NOT EXISTS ScalrTest')
-        cursor.execute('USE ScalrTest')
-        cursor.execute('CREATE TABLE IF NOT EXISTS ScalrValues (val CHAR(200) CHARACTER SET utf8 COLLATE utf8_bin)')
-    else:
-        cursor.execute('USE ScalrTest')
-
-    return cursor
-
-VALUES_TEMPLATE = """
+{% block data %}
 <ol>
-{0}
+    {% for value in values %}
+        <li>{{ value }}</li>
+    {% else %}
+        <li>No data yet - make a request</li>
+    {% endfor %}
 </ol>
+{% endblock data %}
 """
 
-def get_values():
-    try:
-        cursor = get_cursor(False)
-        cursor.execute('SELECT val FROM ScalrValues')
-    except MySQLdb.OperationalError:
-        return "Make a request for data to show up."
-    else:
-        return VALUES_TEMPLATE.format('\n'.join('<li>{0}</li>'.format(value[0]) for value in cursor.fetchall()))
+WRITE_ERROR_TEMPLATE = """
+{% extends base_template %}
+{% block body}
+<h1>Error</h1>
+<p>No connection to the master database could be established.</p>
+{% endblock body %}
+"""
+
+class NoConnectionInfo(Exception):
+    """
+    Raised when connection info hasn't been made available
+    """
+
+class NoConnectionEstablished(Exception):
+    """
+    Raised when no connection could be established
+    """
+
+class DBConnectionInformation(object):
+    def __init__(self, hostname, username, password, master):
+        self.hostname = hostname
+        self.username = username
+        self.password = password
+        self.master = master
+
+    def ips(self):
+        return ','.join(sorted(socket.gethostbyname_ex(self.hostname)[2]))
+
+    def get_cursor(self):
+        connection = MySQLdb.connect(host = self.hostname, user = self.username, passwd = self.password)
+        cursor = connection.cursor()
+
+        if self.master:
+            cursor.execute('CREATE DATABASE IF NOT EXISTS ScalrTest')
+            cursor.execute('USE ScalrTest')
+            cursor.execute('CREATE TABLE IF NOT EXISTS ScalrValues (val CHAR(%s) CHARACTER SET utf8 COLLATE utf8_bin)', VALUE_LENGTH)
+        else:
+            cursor.execute('USE ScalrTest')
+
+        return cursor
+
+    def get_values(self):
+        try:
+            cursor = self.get_cursor()
+            cursor.execute('SELECT val FROM ScalrValues')
+        except MySQLdb.OperationalError as e:
+            if e[0] == MYSQL_UNKNOWN_DB_CODE:
+                return [] # We lazily create the table here.
+            raise
+        else:
+            return [value[0] for value in cursor.fetchall()]
+
+    def insert(self, value):
+        cursor = self.get_cursor()
+        cursor.execute('INSERT INTO ScalrValues (val) VALUES (%s)', value[:VALUE_LENGTH])
+        cursor.execute('COMMIT')
+
+
+class ConnectionInfo(object):
+    def __init__(self, path = CONFIG_PATH):
+        for fname, attr in (
+            ('mysql-username', 'username'), ('mysql-password', 'password'),
+             ('mysql-master', '_master'), ('mysql-slave', '_slave'),
+        ):
+            with open(os.path.join(path, fname)) as f:
+                setattr(self, attr, f.read().strip())
+
+    def _connection_information(self, master):
+        return DBConnectionInformation(self._master if master else self._slave,
+                                       self.username, self.password, master)
+
+    @property
+    def master(self):
+        return self._connection_information(True)
+
+    @property
+    def slave(self):
+        return self._connection_information(False)
+
+    def replicating(self):
+        return self.master.ips != self.slave.ips
+
+
+def prepare_page(page):
+    def inner():
+        ctx = {
+            'base_template' : Template(BASE_TEMPLATE),
+            'form_template' : Template(FORM_TEMPLATE),
+            'connected_template' : Template(CONNECTED_TEMPLATE),
+            'mountpoint' : MOUNTPOINT,
+            'hostname' : socket.gethostname(),
+        }
+        try:
+            ctx['connection_info'] = ConnectionInfo()
+        except NoConnectionInfo:
+            return ctx['base_template'].render(ctx)
+        else:
+            try:
+                return page(ctx)
+            except NoConnectionEstablished:
+                return ctx['form_template'].render(ctx)
+    return inner
+
 
 @get('/')
-def page_get():   
-    return FORM.format(MOUNTPOINT, get_values(), get_status())
+@prepare_page
+def page_get(ctx):
+    ctx['values'] = ctx['connection_info'].slave.get_values()
+    return ctx['connected_template'].render(ctx)
+
 
 @post('/')
-def page_post():
+@prepare_page
+def page_post(ctx):
     value = request.forms.get('value')
-    cursor = get_cursor(True)
-    cursor.execute('INSERT INTO ScalrValues (val) VALUES (%s)', value[:200])
-    cursor.execute('COMMIT')
-
+    ctx['connection_info'].master.insert(value)
     return redirect(MOUNTPOINT)
-
 
 
 if __name__ == "__main__":
