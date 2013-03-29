@@ -7,4 +7,4 @@ echo '%slave-hostname%' > /var/config/mysql-slave
 echo '%username%' > /var/config/mysql-username
 echo '%password%' > /var/config/mysql-password
 
-echo 'Successfully updates MySQL params.'
+echo 'Successfully updated MySQL params.'
