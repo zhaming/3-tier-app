@@ -137,8 +137,11 @@ class ConnectionInfo(object):
             ('mysql-username', 'username'), ('mysql-password', 'password'),
              ('mysql-master', '_master'), ('mysql-slave', '_slave'),
         ):
-            with open(os.path.join(path, fname)) as f:
-                setattr(self, attr, f.read().strip())
+            try:
+                with open(os.path.join(path, fname)) as f:
+                    setattr(self, attr, f.read().strip())
+            except IOError:
+                raise NoConnectionInfo()
 
     def _connection_information(self, master):
         return DBConnectionInformation(self._master if master else self._slave,
