@@ -13,6 +13,7 @@ MOUNTPOINT = '/cgi-bin/app.py'
 DB = 'test-db'
 VALUE_LENGTH = 200
 MYSQL_UNKNOWN_DB_CODE = 1049
+MYSQL_NO_HOST_CODE = 2005
 
 BASE_TEMPLATE = """
 <html>
@@ -20,13 +21,17 @@ BASE_TEMPLATE = """
         <title>Scalr Demo App</title>
     </head>
     <body>
+
     {% block body %}
-        <p>Warning: Missing Database Connection Info. Run SetMySQLParams.</p>
+        <h1>Error</h1>
+        <p>Missing Database Connection Info. Run SetMySQLParams.</p>
     {% endblock body %}
+
     <h1>Server Info</h1>
     <ul>
         <li>hostname: {{ hostname }}</li>
     </ul>
+
     </body>
 </html>
 """
@@ -42,9 +47,9 @@ FORM_TEMPLATE = """
     <input type="submit"/>
 </form>
 
-<h1>Read values (from slave)</h1>
 {% block data %}
-<p>Warning: no connection to the slave database could be established.</p>
+    <h1>Error</h1>
+    <p>No connection to the slave database could be established.</p>
 {% endblock data %}
 
 <h1>MySQL Status</h1>
@@ -63,6 +68,7 @@ CONNECTED_TEMPLATE = """
 {% extends form_template %}
 
 {% block data %}
+<h1>Read values (from slave)</h1>
 <ol>
     {% for value in values %}
         <li>{{ value }}</li>
@@ -75,7 +81,7 @@ CONNECTED_TEMPLATE = """
 
 WRITE_ERROR_TEMPLATE = """
 {% extends base_template %}
-{% block body}
+{% block body %}
 <h1>Error</h1>
 <p>No connection to the master database could be established.</p>
 {% endblock body %}
@@ -90,6 +96,8 @@ class NoConnectionEstablished(Exception):
     """
     Raised when no connection could be established
     """
+    def __init__(self, connection_info):
+        self.connection_info = connection_info
 
 class DBConnectionInformation(object):
     def __init__(self, hostname, username, password, master):
@@ -99,10 +107,19 @@ class DBConnectionInformation(object):
         self.master = master
 
     def ips(self):
-        return ','.join(sorted(socket.gethostbyname_ex(self.hostname)[2]))
+        try:
+            return ','.join(sorted(socket.gethostbyname_ex(self.hostname)[2]))
+        except socket.gaierror as e:
+            return 'Resolution error: {0}'.format(e[1])
 
     def get_cursor(self):
-        connection = MySQLdb.connect(host = self.hostname, user = self.username, passwd = self.password)
+        try:
+            connection = MySQLdb.connect(host = self.hostname, user = self.username, passwd = self.password)
+        except MySQLdb.OperationalError as e:
+            if e[0] == MYSQL_NO_HOST_CODE:
+                raise NoConnectionEstablished(self)
+            raise
+
         cursor = connection.cursor()
 
         if self.master:
@@ -164,6 +181,7 @@ def prepare_page(page):
         ctx = {
             'base_template' : Template(BASE_TEMPLATE),
             'form_template' : Template(FORM_TEMPLATE),
+            'write_error_template': Template(WRITE_ERROR_TEMPLATE),
             'connected_template' : Template(CONNECTED_TEMPLATE),
             'mountpoint' : MOUNTPOINT,
             'hostname' : socket.gethostname(),
@@ -175,8 +193,12 @@ def prepare_page(page):
         else:
             try:
                 return page(ctx)
-            except NoConnectionEstablished:
-                return ctx['form_template'].render(ctx)
+            except NoConnectionEstablished as e:
+                if e.connection_info.master:
+                    template = ctx['write_error_template']
+                else:
+                    template = ctx['form_template']
+                return template.render(ctx)
     return inner
 
 
@@ -196,4 +218,4 @@ def page_post(ctx):
 
 
 if __name__ == "__main__":
-    run(server = CGIServer)
+    run(server = CGIServer, debug = True)
