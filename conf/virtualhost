@@ -1,0 +1,15 @@
+<VirtualHost *>
+    ServerAlias www.{$host} {$server_alias}
+    ServerAdmin {$server_admin}
+    ServerName {$host}
+
+    WSGIDaemonProcess scalr threads=5 python-path={$document_root}/app
+    WSGIScriptAlias / {$document_root}/app/scalr.wsgi
+
+    <Directory {$document_root}/app>
+        WSGIProcessGroup scalr
+        WSGIApplicationGroup {$host}
+        Order deny,allow
+        Allow from all
+    </Directory>
+</VirtualHost>
