@@ -4,12 +4,14 @@
 import os
 import MySQLdb
 import socket
+import functools
 
-from bottle import get, post, run, CGIServer, request, redirect
+from flask import Flask, request, redirect, url_for
 from jinja2 import Template
 
+app = Flask(__name__)
+
 CONFIG_PATH = '/var/config'
-MOUNTPOINT = '/cgi-bin/app.py'
 DB = 'test-db'
 VALUE_LENGTH = 200
 MYSQL_UNKNOWN_DB_CODE = 1049
@@ -177,13 +179,14 @@ class ConnectionInfo(object):
 
 
 def prepare_page(page):
+    @functools.wraps(page)
     def inner():
         ctx = {
             'base_template' : Template(BASE_TEMPLATE),
             'form_template' : Template(FORM_TEMPLATE),
             'write_error_template': Template(WRITE_ERROR_TEMPLATE),
             'connected_template' : Template(CONNECTED_TEMPLATE),
-            'mountpoint' : MOUNTPOINT,
+            'mountpoint' : url_for('page_post'),
             'hostname' : socket.gethostname(),
         }
         try:
@@ -202,20 +205,20 @@ def prepare_page(page):
     return inner
 
 
-@get('/')
+@app.route('/', methods = ['GET', 'HEAD'])
 @prepare_page
 def page_get(ctx):
     ctx['values'] = ctx['connection_info'].slave.get_values()
     return ctx['connected_template'].render(ctx)
 
 
-@post('/')
+@app.route('/', methods = ['POST'])
 @prepare_page
 def page_post(ctx):
-    value = request.forms.get('value')
+    value = request.form.get('value')
     ctx['connection_info'].master.insert(value)
-    return redirect(MOUNTPOINT)
+    return redirect(url_for('page_get'))
 
 
 if __name__ == "__main__":
-    run(server = CGIServer, debug = True)
+    app.run(debug = True)

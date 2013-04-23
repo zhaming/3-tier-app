@@ -4,7 +4,7 @@
 apt-get install -y python-mysqldb python-pip
 pip --upgrade
 pip install jinja2
-pip install bottle
+pip install flask
 
 # Remove pre-existing install
 rm -rf %remote_path%
