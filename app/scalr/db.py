@@ -15,15 +15,16 @@ MYSQL_ERROR_CODE_ACCESS_DENIED = 1045
 
 class ConnectionInfo(object):
 
-    def __init__(self, username, password, _master, _slave):
+    def __init__(self, username, password, _master, _slave, database=DEFAULT_DB):
         self.username = username
         self.password = password
         self._master = _master
         self._slave = _slave
+        self.database = database
 
     def _connection_information(self, master):
         return DBConnection(self._master if master else self._slave,
-                                       self.username, self.password, master)
+            self.username, self.password, master, self.database)
 
     @property
     def master(self):
