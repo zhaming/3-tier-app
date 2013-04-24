@@ -64,7 +64,3 @@ def page_post(connection_info):
     connection_info.master.insert(value)
     flash('Your value ({0}) was written to the database!'.format(value), 'success')
     return redirect(url_for('page_get'))
-
-
-if __name__ == "__main__":
-    app.run(debug = True)
