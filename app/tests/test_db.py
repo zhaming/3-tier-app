@@ -11,6 +11,7 @@ class TestDB(unittest.TestCase):
         self.username = "root"
         self.password = "APP_TEST_PASSWORD"
         self.host = 'localhost'
+        self.db_name = "TestDB"
 
 
 class TestDBConnectionFailure(TestDB):
@@ -36,9 +37,9 @@ class TestDBInstructions(TestDB):
         super(TestDBInstructions, self).setUp()
 
         self.master_conn_info = scalr.DBConnectionInformation(
-            self.host, self.username, self.password, True)
+            self.host, self.username, self.password, True, self.db_name)
         self.slave_conn_info = scalr.DBConnectionInformation(
-            self.host, self.username, self.password, False)
+            self.host, self.username, self.password, False, self.db_name)
 
         self._destroy_test_database()
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
@@ -62,7 +63,8 @@ class TestDBInstructions(TestDB):
     def _destroy_test_database(self):
         cursor = self._direct_cursor()
         try:
-            cursor.execute('DROP DATABASE ScalrTest')  # Any changes are removed
+            # Any changes are removed
+            cursor.execute('DROP DATABASE %s' % self.db_name)
             cursor.execute('COMMIT')
         except MySQLdb.OperationalError:  # DB wasn't created
             pass
@@ -75,12 +77,12 @@ class TestDBInstructions(TestDB):
         cursor = self._direct_cursor()
 
         cursor.execute('SHOW DATABASES')
-        self.assertNotIn('ScalrTest', [row[0] for row in cursor.fetchall()])
+        self.assertNotIn(self.db_name, [row[0] for row in cursor.fetchall()])
 
         self.master_conn_info.insert('val')
 
         cursor.execute('SHOW DATABASES')
-        self.assertIn('ScalrTest', [row[0] for row in cursor.fetchall()])
+        self.assertIn(self.db_name, [row[0] for row in cursor.fetchall()])
 
 
     def test_ignore_no_database(self):

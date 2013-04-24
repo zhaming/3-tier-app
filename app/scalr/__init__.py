@@ -11,8 +11,8 @@ app = Flask(__name__)
 app.secret_key = 'no_sensitive_data_here'
 
 CONFIG_PATH = '/var/config'
-DB = 'test-db'
 VALUE_LENGTH = 200
+DEFAULT_DB = "ScalrTest"
 
 MYSQL_ERROR_CODE_UNKNOWN_DB = 1049
 MYSQL_ERROR_UNKNOWN_TABLE = 1146
@@ -44,11 +44,12 @@ class InvalidCredentials(NoConnectionEstablished):
 
 
 class DBConnectionInformation(object):
-    def __init__(self, hostname, username, password, master):
+    def __init__(self, hostname, username, password, master, database = DEFAULT_DB):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.master = master
+        self.database = database
 
     def ips(self):
         try:
@@ -69,12 +70,14 @@ class DBConnectionInformation(object):
 
         cursor = connection.cursor()
 
+        # Escaping doesn't work for db statements, but the user doesn't
+        # control self.database
         if self.master:
-            cursor.execute('CREATE DATABASE IF NOT EXISTS ScalrTest')
-            cursor.execute('USE ScalrTest')
+            cursor.execute('CREATE DATABASE IF NOT EXISTS %s' % self.database)
+            cursor.execute('USE %s' % self.database)
             cursor.execute('CREATE TABLE IF NOT EXISTS ScalrValues (val CHAR(%s) CHARACTER SET utf8 COLLATE utf8_bin)', VALUE_LENGTH)
         else:
-            cursor.execute('USE ScalrTest')
+            cursor.execute('USE %s' % self.database)
 
         return cursor
 
