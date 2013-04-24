@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+MYSQL_PASSWORD=APP_TEST_PASSWORD
+
 # Install requirements
 sudo apt-get update 
 sudo apt-get install -q -y python-mysqldb python-flask
 
 # Set test credentials for MySQL
-echo mysql-server-5.5 mysql-server/root_password password APP_TEST_PASSWORD | debconf-set-selections
-echo mysql-server-5.5 mysql-server/root_password_again password APP_TEST_PASSWORD | debconf-set-selections
+echo mysql-server-5.5 mysql-server/root_password password $MYSQL_PASSWORD | debconf-set-selections
+echo mysql-server-5.5 mysql-server/root_password_again password $MYSQL_PASSWORD | debconf-set-selections
 
 # Install test dependencies
 sudo apt-get install -q -y mysql-server-5.5 mysql-client-5.5
@@ -34,3 +36,10 @@ cat > /home/vagrant/.coveragerc << EOF
 [run]
 branch=True
 EOF
+
+# Enable the app to run from localhost
+mkdir -p /var/config
+echo localhost > /var/config/mysql-master
+echo localhost > /var/config/mysql-slave
+echo root > /var/config/mysql-username
+echo $MYSQL_PASSWORD > /var/config/mysql-password
