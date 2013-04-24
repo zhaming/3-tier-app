@@ -114,22 +114,25 @@ class ConnectionInfo(object):
         return self.master.ips != self.slave.ips
 
 
-def prepare_page(page):
-    @functools.wraps(page)
-    def inner():
-        ctx = {
-            'mountpoint' : url_for('page_post'),
-            'hostname' : socket.gethostname(),
-            'error': '',
-        }
-        try:
-            ctx['connection_info'] = ConnectionInfo()
-        except NoConnectionInfo:
-            flash('Missing connection info!', 'error')
-            return render_template('base.html', **ctx)
-        else:
+def prepare_page(takes_context = False):
+    def wrap(page):
+        @functools.wraps(page)
+        def inner():
+            ctx = {
+                'mountpoint' : url_for('page_post'),
+                'hostname' : socket.gethostname(),
+            }
+
+            # Do we have connection data?
             try:
-                return page(ctx)
+                connection_info = ConnectionInfo()
+            except NoConnectionInfo:
+                flash('Missing connection info!', 'error')
+                return render_template('base.html', **ctx)
+
+            # Does it work?
+            try:
+                output = page(connection_info, **(ctx if takes_context else {}))
             except NoConnectionEstablished as err:
                 ctx['error'] = err.error
                 if err.connection_info.master:
@@ -139,21 +142,26 @@ def prepare_page(page):
                     flash('Could not connect to the slave database!', 'error')
                     template = 'read_error.html'
                 return render_template(template, **ctx)
-    return inner
+
+            return output
+
+        return inner
+    return wrap
 
 
 @app.route('/', methods = ['GET', 'HEAD'])
-@prepare_page
-def page_get(ctx):
-    ctx['values'] = ctx['connection_info'].slave.get_values()
-    return render_template('connected.html', **ctx)
+@prepare_page(takes_context = True)
+def page_get(connection_info, **ctx):
+    values = connection_info.slave.get_values()
+    return render_template('connected.html',
+            connection_info=connection_info, values=values, **ctx)
 
 
 @app.route('/', methods = ['POST'])
-@prepare_page
-def page_post(ctx):
+@prepare_page()
+def page_post(connection_info):
     value = request.form.get('value')
-    ctx['connection_info'].master.insert(value)
+    connection_info.master.insert(value)
     flash('Your value ({0}) was written to the database!'.format(value), 'success')
     return redirect(url_for('page_get'))
 
