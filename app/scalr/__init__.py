@@ -5,11 +5,10 @@ import MySQLdb
 import socket
 import functools
 
-from flask import Flask, request, redirect, url_for
-from jinja2 import Environment, PackageLoader
+from flask import Flask, request, redirect, url_for, flash, render_template
 
 app = Flask(__name__)
-env = Environment(loader=PackageLoader('scalr'))
+app.secret_key = 'no_sensitive_data_here'
 
 CONFIG_PATH = '/var/config'
 DB = 'test-db'
@@ -126,17 +125,20 @@ def prepare_page(page):
         try:
             ctx['connection_info'] = ConnectionInfo()
         except NoConnectionInfo:
-            return env.get_template('base.html').render(ctx)
+            flash('Missing connection info!', 'error')
+            return render_template('base.html', **ctx)
         else:
             try:
                 return page(ctx)
             except NoConnectionEstablished as err:
                 ctx['error'] = err.error
                 if err.connection_info.master:
-                    template = env.get_template('write_error.html')
+                    flash('Could not write to the master database!', 'error')
+                    template = 'write_error.html'
                 else:
-                    template = env.get_template('read_error.html')
-                return template.render(ctx)
+                    flash('Could not connect to the slave database!', 'error')
+                    template = 'read_error.html'
+                return render_template(template, **ctx)
     return inner
 
 
@@ -144,7 +146,7 @@ def prepare_page(page):
 @prepare_page
 def page_get(ctx):
     ctx['values'] = ctx['connection_info'].slave.get_values()
-    return env.get_template('connected.html').render(ctx)
+    return render_template('connected.html', **ctx)
 
 
 @app.route('/', methods = ['POST'])
@@ -152,6 +154,7 @@ def page_get(ctx):
 def page_post(ctx):
     value = request.form.get('value')
     ctx['connection_info'].master.insert(value)
+    flash('Your value ({0}) was written to the database!'.format(value), 'success')
     return redirect(url_for('page_get'))
 
 

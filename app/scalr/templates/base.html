@@ -7,8 +7,13 @@
     </head>
     <body>
         <div class="hero-unit">
-         <h1>Welcome to Scalr!</h1>
+           <h1>Welcome to Scalr!</h1>
         </div>
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+          <div class="alert {% if category %}alert-{{ category }}{% endif %}">
+          {{ message }}
+          </div>
+        {% endfor %}
         <div class="container">
 
             {% block body %}
