@@ -35,6 +35,14 @@ class NoConnectionEstablished(Exception):
         self.error = error
 
 
+class NoHost(NoConnectionEstablished):
+    pass
+
+
+class InvalidCredentials(NoConnectionEstablished):
+    pass
+
+
 class DBConnectionInformation(object):
     def __init__(self, hostname, username, password, master):
         self.hostname = hostname
@@ -54,9 +62,9 @@ class DBConnectionInformation(object):
         except MySQLdb.MySQLError as e:
             error_code = e[0]
             if error_code == MYSQL_ERROR_CODE_NO_HOST:
-                raise NoConnectionEstablished(self, "The host [{0}] does not exist.".format(self.hostname))
+                raise NoHost(self, "The host [{0}] does not exist.".format(self.hostname))
             if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
-                raise NoConnectionEstablished(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, 'redacted'))
+                raise InvalidCredentials(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, 'redacted'))
             raise NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
 
         cursor = connection.cursor()
@@ -89,11 +97,13 @@ class DBConnectionInformation(object):
 
 
 class ConnectionInfo(object):
+    CONFIG_STRUCTURE = (
+        ('mysql-username', 'username'), ('mysql-password', 'password'),
+        ('mysql-master', '_master'), ('mysql-slave', '_slave'),
+     )
+
     def __init__(self, path = CONFIG_PATH):
-        for fname, attr in (
-            ('mysql-username', 'username'), ('mysql-password', 'password'),
-             ('mysql-master', '_master'), ('mysql-slave', '_slave'),
-        ):
+        for fname, attr in self.CONFIG_STRUCTURE:
             try:
                 with open(os.path.join(path, fname)) as f:
                     setattr(self, attr, f.read().strip())
