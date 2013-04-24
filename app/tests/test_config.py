@@ -6,16 +6,19 @@ import shutil
 import os
 
 import scalr
+from scalr import exceptions
+from scalr import db
+from scalr import config
 
 
-class TestConnectionInfoParser(unittest.TestCase):
+class ConnectionInfoParserTestCase(unittest.TestCase):
     """
     Test that the parser looks at the correct files and reads the values
     """
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
-        for fname, attr in scalr.ConnectionInfo.CONFIG_STRUCTURE:
+        for fname, attr in config.CONFIG_STRUCTURE:
             with open(os.path.join(self.test_dir, fname), 'w') as f:
                 f.write(fname)
 
@@ -26,22 +29,22 @@ class TestConnectionInfoParser(unittest.TestCase):
         """
         Check that a valid config gets parsed correctly
         """
-        conf = scalr.ConnectionInfo(self.test_dir)
+        conf = config.parse_config(self.test_dir)
 
-        for fname, attr in scalr.ConnectionInfo.CONFIG_STRUCTURE:
+        for fname, attr in config.CONFIG_STRUCTURE:
             self.assertEqual(getattr(conf, attr), fname)
 
     def test_invalid_config(self):
         """
         Check that we handle invalid configs
         """
-        self.assertRaises(scalr.NoConnectionInfo, scalr.ConnectionInfo, '/wrongpath')
+        self.assertRaises(exceptions.NoConnectionInfo, config.parse_config, '/wrongpath')
 
     def test_to_db_connection(self):
         """
         Check that config info interacts well with DB info
         """
-        self.conn_info = scalr.ConnectionInfo(self.test_dir)
+        self.conn_info = config.parse_config(self.test_dir)
 
         def replicating(x):
             if x == 'mysql-master':
@@ -64,17 +67,17 @@ class TestConnectionInfoParser(unittest.TestCase):
             self.assert_(self.conn_info.replicating())
 
 
-class TestDBConnectionInformation(unittest.TestCase):
+class DBConnectionInfoTestCase(unittest.TestCase):
     def setUp(self):
         self.username = 'uname'
         self.password = 'password'
         self.master = 'master.example.com'
         self.slave = 'slave.example.com'
 
-        self.master_conn_info = scalr.DBConnectionInformation(
+        self.master_conn_info = db.DBConnection(
             self.master, self.username, self.password, True)
 
-        self.slave_conn_info = scalr.DBConnectionInformation(
+        self.slave_conn_info = db.DBConnection(
             self.slave, self.username, self.password, False)
 
     def test_get_ips(self):

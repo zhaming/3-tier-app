@@ -4,9 +4,11 @@ import unittest
 import warnings
 
 import scalr
+from scalr import exceptions
+from scalr import db
 
 
-class TestDB(unittest.TestCase):
+class DBTestCase(unittest.TestCase):
     def setUp(self):
         self.username = "root"
         self.password = "APP_TEST_PASSWORD"
@@ -14,37 +16,37 @@ class TestDB(unittest.TestCase):
         self.db_name = "TestDB"
 
 
-class TestDBConnectionFailure(TestDB):
+class DBConnectionFailureTestCase(DBTestCase):
     def test_no_host(self):
         """
         Check that we handle invalid host setup
         """
-        conn_info = scalr.DBConnectionInformation(
+        conn_info = db.DBConnection(
             'example.com', self.username, self.password, True)
-        self.assertRaises(scalr.NoHost, conn_info.get_cursor)
+        self.assertRaises(exceptions.NoHost, conn_info.get_cursor)
 
     def test_invalid_credentials(self):
         """
         Check that we handle invalid credentials setup
         """
-        conn_info = scalr.DBConnectionInformation(
+        conn_info = db.DBConnection(
             self.host, "invalid", self.password, True)
-        self.assertRaises(scalr.InvalidCredentials, conn_info.get_cursor)
+        self.assertRaises(exceptions.InvalidCredentials, conn_info.get_cursor)
 
-        conn_info = scalr.DBConnectionInformation(
+        conn_info = db.DBConnection(
             self.host, self.username, "invalid", True)
-        self.assertRaises(scalr.InvalidCredentials, conn_info.get_cursor)
+        self.assertRaises(exceptions.InvalidCredentials, conn_info.get_cursor)
 
 
-class TestDBInstructions(TestDB):
+class DBInstructionsTestCase(DBTestCase):
 
 
     def setUp(self):
-        super(TestDBInstructions, self).setUp()
+        super(DBInstructionsTestCase, self).setUp()
 
-        self.master_conn_info = scalr.DBConnectionInformation(
+        self.master_conn_info = db.DBConnection(
             self.host, self.username, self.password, True, self.db_name)
-        self.slave_conn_info = scalr.DBConnectionInformation(
+        self.slave_conn_info = db.DBConnection(
             self.host, self.username, self.password, False, self.db_name)
 
         self._destroy_test_database()
