@@ -150,7 +150,7 @@ class DBConnectionInformation(object):
         try:
             return sorted(socket.gethostbyname_ex(self.hostname)[2])
         except socket.gaierror as e:
-            return 'Resolution error: {0}'.format(e[1])
+            return ('Resolution error: {0}'.format(e[1]),)  # (Rendering)
 
     def get_cursor(self):
         try:
