@@ -15,6 +15,7 @@ DB = 'test-db'
 VALUE_LENGTH = 200
 
 MYSQL_ERROR_CODE_UNKNOWN_DB = 1049
+MYSQL_ERROR_UNKNOWN_TABLE = 1146
 MYSQL_ERROR_CODE_NO_HOST = 2005
 MYSQL_ERROR_CODE_ACCESS_DENIED = 1045
 
@@ -50,7 +51,7 @@ class DBConnectionInformation(object):
     def get_cursor(self):
         try:
             connection = MySQLdb.connect(host = self.hostname, user = self.username, passwd = self.password)
-        except MySQLdb.OperationalError as e:
+        except MySQLdb.MySQLError as e:
             error_code = e[0]
             if error_code == MYSQL_ERROR_CODE_NO_HOST:
                 raise NoConnectionEstablished(self, "The host [{0}] does not exist.".format(self.hostname))
@@ -73,10 +74,11 @@ class DBConnectionInformation(object):
         try:
             cursor = self.get_cursor()
             cursor.execute('SELECT val FROM ScalrValues')
-        except MySQLdb.OperationalError as e:
-            if e[0] == MYSQL_ERROR_CODE_UNKNOWN_DB:
-                return [] # We lazily create the table here.
-            raise
+        except MySQLdb.MySQLError as e:
+            error_code = e[0]
+            if error_code in (MYSQL_ERROR_CODE_UNKNOWN_DB, MYSQL_ERROR_UNKNOWN_TABLE):
+                return [] # We lazily create the DB and table here.
+            raise NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
         else:
             return [value[0] for value in cursor.fetchall()]
 
