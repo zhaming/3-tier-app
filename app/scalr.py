@@ -14,8 +14,10 @@ app = Flask(__name__)
 CONFIG_PATH = '/var/config'
 DB = 'test-db'
 VALUE_LENGTH = 200
-MYSQL_UNKNOWN_DB_CODE = 1049
-MYSQL_NO_HOST_CODE = 2005
+
+MYSQL_ERROR_CODE_UNKNOWN_DB = 1049
+MYSQL_ERROR_CODE_NO_HOST = 2005
+MYSQL_ERROR_CODE_ACCESS_DENIED = 1045
 
 BASE_TEMPLATE = """
 <html>
@@ -50,8 +52,6 @@ FORM_TEMPLATE = """
 </form>
 
 {% block data %}
-    <h1>Error</h1>
-    <p>No connection to the slave database could be established.</p>
 {% endblock data %}
 
 <h1>MySQL Status</h1>
@@ -81,11 +81,21 @@ CONNECTED_TEMPLATE = """
 {% endblock data %}
 """
 
+READ_ERROR_TEMPLATE = """
+{% extends form_template %}
+{% block data %}
+<h1>Error</h1>
+<p>No connection to the slave database could be established.</p>
+<p>The error was: {{ error }}</p>
+{% endblock data %}
+"""
+
 WRITE_ERROR_TEMPLATE = """
 {% extends base_template %}
 {% block body %}
 <h1>Error</h1>
 <p>No connection to the master database could be established.</p>
+<p>The error was: {{ error }}</p>
 {% endblock body %}
 """
 
@@ -98,8 +108,9 @@ class NoConnectionEstablished(Exception):
     """
     Raised when no connection could be established
     """
-    def __init__(self, connection_info):
+    def __init__(self, connection_info, error):
         self.connection_info = connection_info
+        self.error = error
 
 class DBConnectionInformation(object):
     def __init__(self, hostname, username, password, master):
@@ -118,9 +129,12 @@ class DBConnectionInformation(object):
         try:
             connection = MySQLdb.connect(host = self.hostname, user = self.username, passwd = self.password)
         except MySQLdb.OperationalError as e:
-            if e[0] == MYSQL_NO_HOST_CODE:
-                raise NoConnectionEstablished(self)
-            raise
+            error_code = e[0]
+            if error_code == MYSQL_ERROR_CODE_NO_HOST:
+                raise NoConnectionEstablished(self, "The host [{0}] does not exist.".format(self.hostname))
+            if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
+                raise NoConnectionEstablished(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, self.password))
+            raise NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
 
         cursor = connection.cursor()
 
@@ -138,7 +152,7 @@ class DBConnectionInformation(object):
             cursor = self.get_cursor()
             cursor.execute('SELECT val FROM ScalrValues')
         except MySQLdb.OperationalError as e:
-            if e[0] == MYSQL_UNKNOWN_DB_CODE:
+            if e[0] == MYSQL_ERROR_CODE_UNKNOWN_DB:
                 return [] # We lazily create the table here.
             raise
         else:
@@ -184,10 +198,12 @@ def prepare_page(page):
         ctx = {
             'base_template' : Template(BASE_TEMPLATE),
             'form_template' : Template(FORM_TEMPLATE),
+            'read_error_template': Template(READ_ERROR_TEMPLATE),
             'write_error_template': Template(WRITE_ERROR_TEMPLATE),
             'connected_template' : Template(CONNECTED_TEMPLATE),
             'mountpoint' : url_for('page_post'),
             'hostname' : socket.gethostname(),
+            'error': '',
         }
         try:
             ctx['connection_info'] = ConnectionInfo()
@@ -196,11 +212,12 @@ def prepare_page(page):
         else:
             try:
                 return page(ctx)
-            except NoConnectionEstablished as e:
-                if e.connection_info.master:
+            except NoConnectionEstablished as err:
+                ctx['error'] = err.error
+                if err.connection_info.master:
                     template = ctx['write_error_template']
                 else:
-                    template = ctx['form_template']
+                    template = ctx['read_error_template']
                 return template.render(ctx)
     return inner
 
