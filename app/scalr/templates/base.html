@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Scalr Demo App</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div class="hero-unit">
+         <h1>Welcome to Scalr!</h1>
+        </div>
+        <div class="container">
+
+            {% block body %}
+            <h1>Error</h1>
+            <p>Missing Database Connection Info. Run SetMySQLParams.</p>
+            {% endblock body %}
+
+            <h1>Server Info</h1>
+            <ul>
+                <li>Hostname: <code>{{ hostname }}</code></li>
+            </ul>
+
+        </div>
+    </body>
+</html>

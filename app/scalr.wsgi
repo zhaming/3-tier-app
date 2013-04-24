@@ -1,4 +1,1 @@
-from scalr import app
-from werkzeug.debug import DebuggedApplication
-
-application = DebuggedApplication(app, True)
+from scalr import app as application

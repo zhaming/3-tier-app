@@ -1,0 +1,7 @@
+{% extends 'form.html' %}
+
+{% block data %}
+<h1>Error</h1>
+<p>No connection to the slave database could be established.</p>
+<p>The error was: {{ error }}</p>
+{% endblock data %}

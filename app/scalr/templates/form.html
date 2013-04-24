@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<h1>Write a new Value (to master)</h1>
+<p>Use this form to submit values to the database.</p>
+
+<form action="{{ mountpoint }}" method="post" class="form-inline">
+    <fieldset>
+        <div class="input-append">"
+            <input name="value" type="text" placeholder="Some data..."/>
+            <input type="submit" class="btn btn-success" value="Write!"/>
+        </div>
+    </fieldset>
+</form>
+
+{% block data %}
+{% endblock data %}
+
+<h1>MySQL Status</h1>
+<ul>
+    <li>Username: <code>{{ connection_info.username }}</code></li>
+    <li>Password: <code>[redacted]</code></li>
+    <li>
+        Master hostname:  <code>{{ connection_info.master.hostname }}</code>
+        <ul>
+        {% for ip in connection_info.master.ips() %}
+            <li><code>{{ ip }}</code></li>
+        {% endfor %}
+        </ul>
+    </li>
+    <li>
+        Slave hostname:  <code>{{ connection_info.slave.hostname }}</code>
+        <ul>
+        {% for ip in connection_info.slave.ips() %}
+            <li><code>{{ ip }}</code></li>
+        {% endfor %}
+        </ul>
+    </li>
+    <li>Replicating: <code>{{ connection_info.replicating() }}</code></li>
+</ul>
+
+{% endblock body %}
