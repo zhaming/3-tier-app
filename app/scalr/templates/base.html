@@ -2,12 +2,15 @@
 <html lang="en">
     <head>
         <title>Scalr Demo App</title>
-        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
-        <style type="text/css">code{color:#15D;}</style>
+        <link type="text/css" href="/static/css/bootstrap.css" rel="stylesheet">
+        <link type="text/css" href="/static/css/bootstrap-responsive.css" rel="stylesheet">
+        <link type="image/x-icon" href="/static/img/favicon.ico" rel="shortcut icon" />
+        <style type="text/css">code{color:#15D;} .hero-unit img{margin-right:10px;margin-top:10px}</style>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <div class="hero-unit">
+           <img src="/static/img/scalr-logo.png" alt="Scalr Logo" class="pull-left"/>
            <h1>Welcome to Scalr!</h1>
         </div>
         {% for category, message in get_flashed_messages(with_categories=true) %}

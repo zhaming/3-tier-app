@@ -6,9 +6,16 @@
     WSGIDaemonProcess scalr threads=5 python-path={$document_root}/app
     WSGIScriptAlias / {$document_root}/app/scalr.wsgi
 
+    AliasMatch /static/(.*) {$document_root}/app/scalr/static/$1
+
     <Directory {$document_root}/app>
         WSGIProcessGroup scalr
         WSGIApplicationGroup {$host}
+        Order deny,allow
+        Allow from all
+    </Directory>
+
+    <Directory {$document_root}/app/scalr/static>
         Order deny,allow
         Allow from all
     </Directory>
