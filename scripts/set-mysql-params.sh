@@ -2,8 +2,8 @@
 
 mkdir -p /var/config
 
-echo '%master-hostname%' > /var/config/mysql-master
-echo '%slave-hostname%' > /var/config/mysql-slave
+echo '%writes-endpoint%' > /var/config/mysql-master
+echo '%reads-endpoint%' > /var/config/mysql-slave
 echo '%username%' > /var/config/mysql-username
 echo '%password%' > /var/config/mysql-password
 
