@@ -44,7 +44,7 @@ FORM_TEMPLATE = """
 {% extends base_template %}
 {% block body %}
 
-<h1>New Value (to master)</h1>
+<h1>Write Value (to master)</h1>
 
 <form action="{{ mountpoint }}" method="post">
     <input name="value" type="text"/>
@@ -57,7 +57,7 @@ FORM_TEMPLATE = """
 <h1>MySQL Status</h1>
 <ul>
     <li>username: {{ connection_info.username }}</li>
-    <li>password: {{ connection_info.password }}</li>
+    <li>password: [redacted]</li>
     <li>master:  {{ connection_info.master.hostname }} - {{ connection_info.master.ips() }}</li>
     <li>slave:  {{ connection_info.slave.hostname }} - {{ connection_info.slave.ips() }}</li>
     <li>replicating: {{ connection_info.replicating() }}</li>
@@ -70,7 +70,7 @@ CONNECTED_TEMPLATE = """
 {% extends form_template %}
 
 {% block data %}
-<h1>Read values (from slave)</h1>
+<h1>Read Values (from slave)</h1>
 <ol>
     {% for value in values %}
         <li>{{ value }}</li>
