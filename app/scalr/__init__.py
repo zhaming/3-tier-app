@@ -141,7 +141,8 @@ def prepare_page(takes_context = False):
                 else:
                     flash('Could not connect to the slave database!', 'error')
                     template = 'read_error.html'
-                return render_template(template, **ctx)
+                return render_template(template,
+                    connection_info = connection_info, **ctx)
 
             return output
 
