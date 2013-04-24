@@ -20,22 +20,30 @@ MYSQL_ERROR_CODE_NO_HOST = 2005
 MYSQL_ERROR_CODE_ACCESS_DENIED = 1045
 
 BASE_TEMPLATE = """
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <title>Scalr Demo App</title>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
+        <div class="hero-unit">
+         <h1>Welcome to Scalr!</h1>
+        </div>
+        <div class="container">
 
-    {% block body %}
-        <h1>Error</h1>
-        <p>Missing Database Connection Info. Run SetMySQLParams.</p>
-    {% endblock body %}
+            {% block body %}
+            <h1>Error</h1>
+            <p>Missing Database Connection Info. Run SetMySQLParams.</p>
+            {% endblock body %}
 
-    <h1>Server Info</h1>
-    <ul>
-        <li>hostname: {{ hostname }}</li>
-    </ul>
+            <h1>Server Info</h1>
+            <ul>
+                <li>Hostname: <code>{{ hostname }}</code></li>
+            </ul>
 
+        </div>
     </body>
 </html>
 """
@@ -44,11 +52,16 @@ FORM_TEMPLATE = """
 {% extends base_template %}
 {% block body %}
 
-<h1>Write Value (to master)</h1>
+<h1>Write a new Value (to master)</h1>
+<p>Use this form to submit values to the database.</p>
 
-<form action="{{ mountpoint }}" method="post">
-    <input name="value" type="text"/>
-    <input type="submit"/>
+<form action="{{ mountpoint }}" method="post" class="form-inline">
+    <fieldset>
+        <div class="input-append">"
+            <input name="value" type="text" placeholder="Some data..."/>
+            <input type="submit" class="btn btn-success" value="Write!"/>
+        </div>
+    </fieldset>
 </form>
 
 {% block data %}
@@ -56,11 +69,25 @@ FORM_TEMPLATE = """
 
 <h1>MySQL Status</h1>
 <ul>
-    <li>username: {{ connection_info.username }}</li>
-    <li>password: [redacted]</li>
-    <li>master:  {{ connection_info.master.hostname }} - {{ connection_info.master.ips() }}</li>
-    <li>slave:  {{ connection_info.slave.hostname }} - {{ connection_info.slave.ips() }}</li>
-    <li>replicating: {{ connection_info.replicating() }}</li>
+    <li>Username: <code>{{ connection_info.username }}</code></li>
+    <li>Password: <code>[redacted]</code></li>
+    <li>
+        Master hostname:  <code>{{ connection_info.master.hostname }}</code>
+        <ul>
+        {% for ip in connection_info.master.ips() %}
+            <li><code>{{ ip }}</code></li>
+        {% endfor %}
+        </ul>
+    </li>
+    <li>
+        Slave hostname:  <code>{{ connection_info.slave.hostname }}</code>
+        <ul>
+        {% for ip in connection_info.slave.ips() %}
+            <li><code>{{ ip }}</code></li>
+        {% endfor %}
+        </ul>
+    </li>
+    <li>Replicating: <code>{{ connection_info.replicating() }}</code></li>
 </ul>
 
 {% endblock body %}
@@ -70,14 +97,14 @@ CONNECTED_TEMPLATE = """
 {% extends form_template %}
 
 {% block data %}
-<h1>Read Values (from slave)</h1>
-<ol>
+<h1>Read Values (from slaves)</h1>
+<ul>
     {% for value in values %}
         <li>{{ value }}</li>
     {% else %}
         <li>No data yet - make a request</li>
     {% endfor %}
-</ol>
+</ul>
 {% endblock data %}
 """
 
@@ -121,7 +148,7 @@ class DBConnectionInformation(object):
 
     def ips(self):
         try:
-            return ','.join(sorted(socket.gethostbyname_ex(self.hostname)[2]))
+            return sorted(socket.gethostbyname_ex(self.hostname)[2])
         except socket.gaierror as e:
             return 'Resolution error: {0}'.format(e[1])
 
