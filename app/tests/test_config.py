@@ -15,18 +15,53 @@ class TestConnectionInfoParser(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
-
-    def test_valid_config(self):
         for fname, attr in scalr.ConnectionInfo.CONFIG_STRUCTURE:
             with open(os.path.join(self.test_dir, fname), 'w') as f:
                 f.write(fname)
 
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+
+    def test_valid_config(self):
+        """
+        Check that a valid config gets parsed correctly
+        """
         conf = scalr.ConnectionInfo(self.test_dir)
 
         for fname, attr in scalr.ConnectionInfo.CONFIG_STRUCTURE:
             self.assertEqual(getattr(conf, attr), fname)
+
+    def test_invalid_config(self):
+        """
+        Check that we handle invalid configs
+        """
+        self.assertRaises(scalr.NoConnectionInfo, scalr.ConnectionInfo, '/wrongpath')
+
+    def test_to_db_connection(self):
+        """
+        Check that config info interacts well with DB info
+        """
+        self.conn_info = scalr.ConnectionInfo(self.test_dir)
+
+        def replicating(x):
+            if x == 'mysql-master':
+                return [x, [], ['10.0.0.1']]
+            else:
+                return [x, [], ['10.0.0.2', '10.0.0.3']]
+
+        with mock.patch('socket.gethostbyname_ex') as gethostbyname_ex:
+
+
+            # No replication
+            gethostbyname_ex.return_value = ['example.com', [], ['10.0.0.1']]
+            self.assertEqual(self.conn_info.master.ips(), self.conn_info.slave.ips())
+            self.assert_(not self.conn_info.replicating())
+
+            # Replication
+            gethostbyname_ex.return_value = None
+            gethostbyname_ex.side_effect = replicating
+            self.assertNotEqual(self.conn_info.master.ips(), self.conn_info.slave.ips())
+            self.assert_(self.conn_info.replicating())
 
 
 class TestDBConnectionInformation(unittest.TestCase):
@@ -44,7 +79,7 @@ class TestDBConnectionInformation(unittest.TestCase):
 
     def test_get_ips(self):
         """
-        Test our IP lookups
+        Check that we do the correct IP lookups
         """
         master_ips = ['10.0.0.1']
         master_lookup = (self.master, [], master_ips)

@@ -16,11 +16,17 @@ class TestDB(unittest.TestCase):
 
 class TestDBConnectionFailure(TestDB):
     def test_no_host(self):
+        """
+        Check that we handle invalid host setup
+        """
         conn_info = scalr.DBConnectionInformation(
             'example.com', self.username, self.password, True)
         self.assertRaises(scalr.NoHost, conn_info.get_cursor)
 
     def test_invalid_credentials(self):
+        """
+        Check that we handle invalid credentials setup
+        """
         conn_info = scalr.DBConnectionInformation(
             self.host, "invalid", self.password, True)
         self.assertRaises(scalr.InvalidCredentials, conn_info.get_cursor)

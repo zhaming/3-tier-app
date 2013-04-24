@@ -126,7 +126,7 @@ class ConnectionInfo(object):
         return self._connection_information(False)
 
     def replicating(self):
-        return self.master.ips != self.slave.ips
+        return self.master.ips() != self.slave.ips()
 
 
 def prepare_page(takes_context = False):
