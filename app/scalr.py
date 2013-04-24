@@ -133,7 +133,7 @@ class DBConnectionInformation(object):
             if error_code == MYSQL_ERROR_CODE_NO_HOST:
                 raise NoConnectionEstablished(self, "The host [{0}] does not exist.".format(self.hostname))
             if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
-                raise NoConnectionEstablished(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, self.password))
+                raise NoConnectionEstablished(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, 'redacted'))
             raise NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
 
         cursor = connection.cursor()
