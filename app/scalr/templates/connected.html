@@ -8,5 +8,8 @@
   {% else %}
     <li><span class="badge badge-warning">!</span> There's no data in your database yet. Start adding some!</li>
   {% endfor %}
+  {% if values %}
+  <p><small class="muted">The data you added last is shown first.</small></p>
+  {% endif %}
 </ul>
 {% endblock data %}

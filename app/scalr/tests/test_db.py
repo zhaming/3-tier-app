@@ -102,4 +102,6 @@ class DBInstructionsTestCase(DBTestCase):
         values = ['val1', 'val2', 'val3', 'val4']
         for i, value in enumerate(values):
             self.master_conn.insert(value)
-            self.assertEqual(values[:i+1], self.slave_conn.get_values())
+            expected = (values[:i+1])
+            expected.reverse()
+            self.assertEqual(expected, self.slave_conn.get_values())

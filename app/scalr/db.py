@@ -119,8 +119,11 @@ class DBConnection(object):
         if self.master:
             cursor.execute('CREATE DATABASE IF NOT EXISTS %s' % self.database)
             cursor.execute('USE %s' % self.database)
-            cursor.execute('CREATE TABLE IF NOT EXISTS ScalrValues (val CHAR'
-                           '(%s) CHARACTER SET utf8 COLLATE utf8_bin)',
+            cursor.execute('CREATE TABLE IF NOT EXISTS ScalrValues ('
+                           'id MEDIUMINT NOT NULL AUTO_INCREMENT,' 
+                           'val CHAR (%s) CHARACTER SET utf8 COLLATE utf8_bin,'
+                           'PRIMARY KEY (id)'
+                           ')',
                            VALUE_LENGTH)
 
         else:
@@ -137,7 +140,7 @@ class DBConnection(object):
 
         try:
             cursor = self.get_cursor()
-            cursor.execute('SELECT val FROM ScalrValues')
+            cursor.execute('SELECT val FROM ScalrValues ORDER BY id DESC')
 
         except MySQLdb.MySQLError as err:
             error_code = err[0]
