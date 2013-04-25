@@ -10,16 +10,10 @@ import scalr
 from scalr import db
 from scalr import exceptions
 
-TEST_DB_CONFIG = {
-    '_master': 'localhost',
-    '_slave': 'localhost',
-    'username': 'root',
-    'password': 'APP_TEST_PASSWORD',
-    'database': 'APP_TEST_DATABASE'
-}
+from scalr.tests import TEST_DB_CONFIG
 
 
-class AppTestCase(unittest.TestCase):
+class BaseAppTestCase(unittest.TestCase):
     def setUp(self):
         # Set the app client up
         scalr.app.config['TESTING'] = True
@@ -48,6 +42,7 @@ class AppTestCase(unittest.TestCase):
         return db.ConnectionInfo(**self.db_config)
 
 
+class AppTestCase(BaseAppTestCase):
     def test_get(self):
         """
         Check that we render the page correctly
@@ -61,12 +56,12 @@ class AppTestCase(unittest.TestCase):
         """
         insert = 'myValue'
 
-        r = self.client.post('/', data = {'value': insert})
+        r = self.client.post('/', data={'value': insert})
         self.assertEqual(r.status_code, 302)
 
         r = self.client.get('/')
         self.assertIn(insert, r.data)
-        
+
     def test_read_error(self):
         """
         Check that we notify the user of read errors
@@ -77,12 +72,18 @@ class AppTestCase(unittest.TestCase):
         self.assertIn('An error occurred when', r.data)
 
     def test_write_error(self):
+        """
+        Check that we notify the user of write errors
+        """
         self.db_config['_master'] = "blah"
 
-        r = self.client.post('/', data = {'value':'myValue'})
+        r = self.client.post('/', data={'value': 'myValue'})
         self.assertIn('An error occurred when', r.data)
 
     def test_no_config(self):
+        """
+        Check that we report an absent configuration
+        """
         self.parser.side_effect = exceptions.NoConnectionInfo
 
         r = self.client.get('/')

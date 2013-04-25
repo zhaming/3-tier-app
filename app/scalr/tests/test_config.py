@@ -38,7 +38,8 @@ class ConnectionInfoParserTestCase(unittest.TestCase):
         """
         Check that we handle invalid configs
         """
-        self.assertRaises(exceptions.NoConnectionInfo, config.parse_config, '/wrongpath')
+        self.assertRaises(exceptions.NoConnectionInfo, config.parse_config,
+                          '/wrongpath')
 
     def test_to_db_connection(self):
         """
@@ -53,17 +54,19 @@ class ConnectionInfoParserTestCase(unittest.TestCase):
                 return [x, [], ['10.0.0.2', '10.0.0.3']]
 
         with mock.patch('socket.gethostbyname_ex') as gethostbyname_ex:
-
-
             # No replication
             gethostbyname_ex.return_value = ['example.com', [], ['10.0.0.1']]
-            self.assertEqual(self.conn_info.master.ips(), self.conn_info.slave.ips())
+
+            self.assertEqual(self.conn_info.master.ips(),
+                             self.conn_info.slave.ips())
             self.assert_(not self.conn_info.replicating())
 
             # Replication
             gethostbyname_ex.return_value = None
             gethostbyname_ex.side_effect = replicating
-            self.assertNotEqual(self.conn_info.master.ips(), self.conn_info.slave.ips())
+
+            self.assertNotEqual(self.conn_info.master.ips(),
+                                self.conn_info.slave.ips())
             self.assert_(self.conn_info.replicating())
 
 
@@ -98,7 +101,8 @@ class DBConnectionInfoTestCase(unittest.TestCase):
             self.assertEqual(slave_ips, self.slave_conn_info.ips())
 
             import socket
-            error_message = '[Errno 8] nodename nor servname provided, or not known'
+            error_message = '[Errno 8] nodename nor servname provided'\
+                            ', or not known'
             gethostbyname_ex.side_effect = socket.gaierror(8, error_message)
             self.assertEqual(1, len(self.master_conn_info.ips()))
             self.assertIn(error_message, self.master_conn_info.ips()[0])

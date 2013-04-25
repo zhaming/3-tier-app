@@ -6,13 +6,12 @@ import warnings
 from scalr import exceptions
 from scalr import db
 
+from scalr.tests import TEST_DB_CONFIG
+
 
 class DBTestCase(unittest.TestCase):
     def setUp(self):
-        self.username = "root"
-        self.password = "APP_TEST_PASSWORD"
-        self.host = 'localhost'
-        self.db_name = "TestDB"
+        self.conn_info = db.ConnectionInfo(**TEST_DB_CONFIG)
 
 
 class DBConnectionFailureTestCase(DBTestCase):
@@ -20,62 +19,59 @@ class DBConnectionFailureTestCase(DBTestCase):
         """
         Check that we handle invalid host setup
         """
-        conn_info = db.DBConnection(
-            'example.com', self.username, self.password, True)
-        self.assertRaises(exceptions.NoHost, conn_info.get_cursor)
+        self.conn_info._master = "invalid"
+        conn = self.conn_info.master
+        self.assertRaises(exceptions.NoHost, conn.get_cursor)
 
     def test_invalid_credentials(self):
         """
-        Check that we handle invalid credentials setup
+        Check that we handle invalid username
         """
-        conn_info = db.DBConnection(
-            self.host, "invalid", self.password, True)
-        self.assertRaises(exceptions.InvalidCredentials, conn_info.get_cursor)
+        self.conn_info.username = "invalid"
+        conn = self.conn_info.master
+        self.assertRaises(exceptions.InvalidCredentials, conn.get_cursor)
 
-        conn_info = db.DBConnection(
-            self.host, self.username, "invalid", True)
-        self.assertRaises(exceptions.InvalidCredentials, conn_info.get_cursor)
+    def test_invalid_password(self):
+        """
+        Check that we handle an invalid password
+        """
+        self.conn_info.password = "invalid"
+        conn = self.conn_info.master
+        self.assertRaises(exceptions.InvalidCredentials, conn.get_cursor)
 
 
 class DBInstructionsTestCase(DBTestCase):
-
-
     def setUp(self):
         super(DBInstructionsTestCase, self).setUp()
 
-        self.master_conn_info = db.DBConnection(
-            self.host, self.username, self.password, True, self.db_name)
-        self.slave_conn_info = db.DBConnection(
-            self.host, self.username, self.password, False, self.db_name)
+        self.master_conn = self.conn_info.master
+        self.slave_conn = self.conn_info.slave
 
         self._destroy_test_database()
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
-
 
     def tearDown(self):
         warnings.resetwarnings()
         self._destroy_test_database()
 
-    
     def _direct_cursor(self):
         """
         Bypass our cursor wrapper methods to talk directly to the DB
         """
         connection = MySQLdb.connect(
-            host = self.host, user = self.username, passwd = self.password)
+            host=self.conn_info._master, user=self.conn_info.username,
+            passwd=self.conn_info.password)
 
         return connection.cursor()
-
 
     def _destroy_test_database(self):
         cursor = self._direct_cursor()
         try:
             # Any changes are removed
-            cursor.execute('DROP DATABASE %s' % self.db_name)
+            cursor.execute('DROP DATABASE %s' % self.conn_info.database)
             cursor.execute('COMMIT')
         except MySQLdb.OperationalError:  # DB wasn't created
             pass
-
 
     def test_create_database(self):
         """
@@ -84,20 +80,20 @@ class DBInstructionsTestCase(DBTestCase):
         cursor = self._direct_cursor()
 
         cursor.execute('SHOW DATABASES')
-        self.assertNotIn(self.db_name, [row[0] for row in cursor.fetchall()])
+        self.assertNotIn(self.conn_info.database,
+                         [row[0] for row in cursor.fetchall()])
 
-        self.master_conn_info.insert('val')
+        self.master_conn.insert('val')
 
         cursor.execute('SHOW DATABASES')
-        self.assertIn(self.db_name, [row[0] for row in cursor.fetchall()])
-
+        self.assertIn(self.conn_info.database,
+                      [row[0] for row in cursor.fetchall()])
 
     def test_ignore_no_database(self):
         """
         Check that we ignore the absence of a database
         """
-        self.assertEqual([], self.slave_conn_info.get_values())
-
+        self.assertEqual([], self.slave_conn.get_values())
 
     def test_add_values(self):
         """
@@ -105,5 +101,5 @@ class DBInstructionsTestCase(DBTestCase):
         """
         values = ['val1', 'val2', 'val3', 'val4']
         for i, value in enumerate(values):
-            self.master_conn_info.insert(value)
-            self.assertEqual(values[:i+1], self.slave_conn_info.get_values())
+            self.master_conn.insert(value)
+            self.assertEqual(values[:i+1], self.slave_conn.get_values())
