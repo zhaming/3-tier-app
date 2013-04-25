@@ -5,31 +5,43 @@
         <link type="text/css" href="/static/css/bootstrap.css" rel="stylesheet">
         <link type="text/css" href="/static/css/bootstrap-responsive.css" rel="stylesheet">
         <link type="image/x-icon" href="/static/img/favicon.ico" rel="shortcut icon" />
-        <style type="text/css">code{color:#15D;} .hero-unit img{margin-right:10px;margin-top:10px}</style>
+        <style type="text/css">code{color:#15d;} code.error{color:#d14}.hero-unit img{margin-right:10px;margin-top:10px}</style>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <div class="hero-unit">
            <img src="/static/img/scalr-logo.png" alt="Scalr Logo" class="pull-left"/>
            <h1>Welcome to Scalr!</h1>
+           <p>This is the Scalr Demo App. You submit data, it writes it to the MySQL master, and then
+              reads it from the MySQL slave.</p>
         </div>
         {% for category, message in get_flashed_messages(with_categories=true) %}
           <div class="alert {% if category %}alert-{{ category }}{% endif %}">
           {{ message }}
           </div>
         {% endfor %}
+
         <div class="container">
 
-            {% block body %}
-            <h1>Error</h1>
-            <p>Missing Database Connection Info. Run SetMySQLParams.</p>
-            {% endblock body %}
+            {% block config_error %}
+            {% endblock config_error %}
 
-            <h1>Server Info</h1>
+            {% block form %}
+            {% endblock form %}
+
+            {% block data %}
+            {% endblock data %}
+
+            <hr/>
+
+            {% block info %}
+            {% endblock %}
+            <h2>Server Information</h2>
             <ul>
-                <li>Hostname: <code>{{ hostname }}</code></li>
+                <li>Hostname of this App Server: <code>{{ hostname }}</code></li>
             </ul>
 
         </div>
+
     </body>
 </html>

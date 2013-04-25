@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block config_error %}
+<h2>An error occured:</h2>
+<p><span class="badge badge-important">!</span> Something looks wrong. There don't seem to be any configuration files here.</p>
+<p>Did you run the SetMySQL params script?</p>
+{% endblock config_error %}

@@ -61,7 +61,7 @@ class DBConnection(object):
                 raise exceptions.NoHost(self, "The host [{0}] does not exist.".format(self.hostname))
             if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
                 raise exceptions.InvalidCredentials(self, "The username [{0}] or password [{1}] is incorrect.".format(self.username, 'redacted'))
-            raise exceptions.NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
+            raise exceptions.NoConnectionEstablished(self, "A MySQL error occurred: The MySQL Error Code was [{0}]".format(error_code))
 
         cursor = connection.cursor()
 
@@ -84,7 +84,7 @@ class DBConnection(object):
             error_code = e[0]
             if error_code in (MYSQL_ERROR_CODE_UNKNOWN_DB, MYSQL_ERROR_UNKNOWN_TABLE):
                 return [] # We lazily create the DB and table here.
-            raise exceptions.NoConnectionEstablished(self, "An error occured: Code {0}".format(error_code))
+            raise exceptions.NoConnectionEstablished(self, "A MySQL error occurred: The MySQL Error Code was [{0}]".format(error_code))
         else:
             return [value[0] for value in cursor.fetchall()]
 

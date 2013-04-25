@@ -74,16 +74,16 @@ class AppTestCase(unittest.TestCase):
         self.db_config['_slave'] = "blah"
 
         r = self.client.get('/')
-        self.assertIn('Error', r.data)
+        self.assertIn('An error occurred when', r.data)
 
     def test_write_error(self):
         self.db_config['_master'] = "blah"
 
         r = self.client.post('/', data = {'value':'myValue'})
-        self.assertIn('Error', r.data)
+        self.assertIn('An error occurred when', r.data)
 
     def test_no_config(self):
         self.parser.side_effect = exceptions.NoConnectionInfo
 
         r = self.client.get('/')
-        self.assertIn('Missing Database Connection Info', r.data)
+        self.assertIn('Something looks wrong', r.data)

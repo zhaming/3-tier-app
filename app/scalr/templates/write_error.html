@@ -1,7 +1,8 @@
-{% extends 'base.html' %}
+{% extends 'form.html' %}
 
-{% block body %}
-<h1>Error</h1>
-<p>No connection to the master database could be established.</p>
-<p>The error was: {{ error }}</p>
-{% endblock body %}
+{% block form %}
+<h2>Here's why we couldn't write:</h2>
+<p><span class="badge badge-important">!</span> The error was: <code class="error">{{ error }}</code></p>
+<p>Check your configuration below, then <a href="/">try again</a></p>
+<p><small class="muted">You might want to fix this by running the Set MySQL Params script.</small></p>
+{% endblock form %}

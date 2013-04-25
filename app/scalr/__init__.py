@@ -26,8 +26,8 @@ def prepare_page(takes_context = False):
             try:
                 connection_info = config.parse_config(CONFIG_PATH)
             except exceptions.NoConnectionInfo:
-                flash('Missing connection info!', 'error')
-                return render_template('base.html', **ctx)
+                flash('MySQL connection information is unavailable', 'error')
+                return render_template('config_error.html', **ctx)
 
             # Does it work?
             try:
@@ -35,10 +35,10 @@ def prepare_page(takes_context = False):
             except exceptions.NoConnectionEstablished as err:
                 ctx['error'] = err.error
                 if err.connection_info.master:
-                    flash('Could not write to the master database!', 'error')
+                    flash('An error occurred when writing to the Master MySQL database!', 'error')
                     template = 'write_error.html'
                 else:
-                    flash('Could not connect to the slave database!', 'error')
+                    flash('An error occurred when reading from a Slave MySQL database!', 'error')
                     template = 'read_error.html'
                 return render_template(template,
                     connection_info = connection_info, **ctx)

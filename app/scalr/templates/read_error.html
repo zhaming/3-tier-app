@@ -1,7 +1,8 @@
 {% extends 'form.html' %}
 
 {% block data %}
-<h1>Error</h1>
-<p>No connection to the slave database could be established.</p>
-<p>The error was: {{ error }}</p>
+<h2>Here's why we couldn't read:</h2>
+<p><span class="badge badge-important">!</span> The error was: <code class="error">{{ error }}</code></p>
+<p>Check your configuration below, then <a href="/">refresh this page</a></p>
+<p><small class="muted">You might want to fix this by running the Set MySQL Params script.</small></p>
 {% endblock data %}

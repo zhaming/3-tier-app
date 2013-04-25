@@ -1,12 +1,12 @@
 {% extends 'form.html' %}
 
 {% block data %}
-<h1>Read Values (from slaves)</h1>
+<h2>Reading Values (from MySQL slaves)</h2>
 <ul>
-    {% for value in values %}
-        <li>{{ value }}</li>
-    {% else %}
-        <li>No data yet - make a request</li>
-    {% endfor %}
+  {% for value in values %}
+    <li>{{ value }}</li>
+  {% else %}
+    <li><span class="badge badge-warning">!</span> There's no data in your database yet. Start adding some!</li>
+  {% endfor %}
 </ul>
 {% endblock data %}
