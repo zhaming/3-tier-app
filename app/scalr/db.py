@@ -94,17 +94,18 @@ class DBConnection(object):
         try:
             connection = MySQLdb.connect(host=self.hostname,
                                          user=self.username,
-                                         passwd=self.password)
+                                         passwd=self.password,
+                                         charset='utf8')
 
         except MySQLdb.MySQLError as err:
             error_code = err[0]
 
             if error_code == MYSQL_ERROR_CODE_NO_HOST:
-                msg = "The host [{0}] does not exist." .format(self.hostname)
+                msg = u'The host [{0}] does not exist.'.format(self.hostname)
                 raise exceptions.NoHost(self, msg)
 
             if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
-                msg = "The username [{0}] or password [{1}] is incorrect."\
+                msg = u'The username [{0}] or password [{1}] is incorrect.'\
                       .format(self.username, 'redacted')
                 raise exceptions.InvalidCredentials(self, msg)
 
@@ -147,7 +148,7 @@ class DBConnection(object):
             raise exceptions.NoConnectionEstablished(self, msg)
 
         else:
-            return [value[0] for value in cursor.fetchall()]
+            return [value[0].decode('utf-8') for value in cursor.fetchall()]
 
     def insert(self, value):
         """
@@ -156,5 +157,5 @@ class DBConnection(object):
 
         cursor = self.get_cursor()
         cursor.execute('INSERT INTO ScalrValues (val) VALUES (%s)',
-                       value[:VALUE_LENGTH])
+                       value[:VALUE_LENGTH].encode('utf-8'))
         cursor.execute('COMMIT')

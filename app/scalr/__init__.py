@@ -30,7 +30,7 @@ def prepare_page(takes_context=False):
             try:
                 connection_info = config.parse_config(CONFIG_PATH)
             except exceptions.NoConnectionInfo:
-                flash('MySQL connection information is unavailable', 'error')
+                flash(u'MySQL connection information is unavailable', 'error')
                 return render_template('config_error.html', **ctx)
 
             # Does it work?
@@ -40,12 +40,12 @@ def prepare_page(takes_context=False):
             except exceptions.NoConnectionEstablished as err:
                 ctx['error'] = err.error
                 if err.connection_info.master:
-                    flash('An error occurred when writing'
-                          'to the Master MySQL database!', 'error')
+                    flash(u'An error occurred when writing '
+                          u'to the Master MySQL database!', 'error')
                     template = 'write_error.html'
                 else:
-                    flash('An error occurred when reading'
-                          'from a Slave MySQL database!', 'error')
+                    flash(u'An error occurred when reading '
+                          u'from a Slave MySQL database!', 'error')
                     template = 'read_error.html'
                 return render_template(template,
                                        connection_info=connection_info,
@@ -79,6 +79,6 @@ def page_post(connection_info):
 
     value = request.form.get('value')
     connection_info.master.insert(value)
-    flash('Your value ({0}) was written to the database!'.format(value),
+    flash(u'Your value ({0}) was written to the database!'.format(value),
           'success')
     return redirect(url_for('page_get'))
