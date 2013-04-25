@@ -3,7 +3,6 @@ import MySQLdb
 import unittest
 import warnings
 
-import scalr
 from scalr import exceptions
 from scalr import db
 
