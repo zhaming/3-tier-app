@@ -10,6 +10,11 @@ This is a demo application provided to follow the tutorials from Scalr.
 This application is obviously insecure (and useless), and should not be used
 for anything but following the tutorials.
 
+This Tutorial
+-------------
+
+You can follow the tutorial [on the Scalr wiki][1].
+
 
 Warning
 -------
@@ -21,3 +26,6 @@ reveal the username to the database it is used with.
 follow the tutorial.**
 
 You should not deploy this application on a farm used by any service.
+
+
+[1]: http://wiki.scalr.com/x/X4Ji
