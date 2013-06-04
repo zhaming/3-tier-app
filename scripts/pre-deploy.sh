@@ -17,7 +17,7 @@ if [ "$OS" = "debian" ]; then
 fi
 
 if [ "$OS" = "redhat" ]; then
-    yum -y install MySQL-python python-pip mod_wsgi
+    yum -y install MySQL-python mod_wsgi
 
     easy_install pip
     pip install flask  # Outdated flask in the packages
