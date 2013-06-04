@@ -18,7 +18,9 @@ fi
 
 if [ "$OS" = "redhat" ]; then
     yum -y install MySQL-python python-pip mod_wsgi
-    python-pip install flask  # Outdated flask in the packages
+
+    easy_install pip
+    pip install flask  # Outdated flask in the packages
 
     # Configure mod_wsgi to use a writabe location
     echo "WSGISocketPrefix /var/run/wsgi" > /etc/httpd/conf.d/webapp.conf
