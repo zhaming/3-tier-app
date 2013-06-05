@@ -111,3 +111,10 @@ def page_post(connection_info):
     flash(u'Your message ({0}) was written to the database!'.format(value),
           'success')
     return redirect(url_for('page_get'))
+
+@app.route('/clean', methods=['POST'])
+@prepare_page()
+def clean_table(connection_info):
+    connection_info.master.clean()
+    flash(u'Successfully cleant the table!', 'success')
+    return redirect(url_for('page_get'))

@@ -167,3 +167,11 @@ class DBConnection(object):
         cursor.execute('INSERT INTO ScalrValues (val) VALUES (%s)',
                        (value[:VALUE_LENGTH].encode('utf-8'),))
         cursor.execute('COMMIT')
+
+    def clean(self):
+      """
+      Remove all values
+      """
+      cursor = self.get_cursor()
+      cursor.execute('DELETE FROM ScalrValues')
+      cursor.execute('COMMIT')
