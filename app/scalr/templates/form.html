@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block form %}
-<h2>Write a new Value (to MySQL Master)</h2>
+<h2>Write a new Value (to the MySQL Master)</h2>
 <p>Use this form to submit values to the database.</p>
 
 <form action="{{ mountpoint }}" method="post" class="form-inline">
     <fieldset>
         <div class="input-append">"
-            <input name="value" type="text" placeholder="Some data..."/>
-            <input type="submit" class="btn btn-success" value="Write!"/>
+            <input autofocus="autofocus" name="value" type="text" placeholder="Write something here!"/>
+            <input type="submit" class="btn btn-success" value="Save it!"/>
         </div>
     </fieldset>
 </form>
