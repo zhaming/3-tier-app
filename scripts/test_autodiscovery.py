@@ -13,6 +13,7 @@ VALID_ROLES_RESPONSE = """<?xml version="1.0" ?>
             <hosts>
                 <host cloud-location="us-east-1" external-ip="23.22.147.1" index="1" internal-ip="10.190.214.199" replication-master="1" status="Running"/>
                 <host cloud-location="us-east-1" external-ip="54.227.143.73" index="2" internal-ip="10.157.42.56" replication-master="0" status="Running"/>
+                <host cloud-location="us-east-1" external-ip="54.27.18.54" index="2" internal-ip="10.160.20.42" replication-master="0" status="Running"/>
             </hosts>
         </role>
     </roles>
@@ -92,48 +93,49 @@ FARM_ROLE_PARAMS_RESPONSE = """<?xml version="1.0" ?>
 """
 
 
-class TestRoleEngine(autodiscovery.RoleEngine):
-    response = None
-    params = None
+class TestFarmRoleEngine(autodiscovery.FarmRoleEngine):
+    def __init__(self):
+        self.responses = []
+        self.params = []
 
     def _szradm(self, params):
-        self.params = params
-        return ElementTree.fromstring(self.response)
+        self.params.append(params)
+        return ElementTree.fromstring(self.responses.pop(0))
 
 
 class RoleEngineTestCase(unittest.TestCase):
     def setUp(self):
-        self.engine = TestRoleEngine()
-    
+        self.engine = TestFarmRoleEngine()
+
     def test_ok(self):
-        self.engine.response = VALID_ROLES_RESPONSE
+        self.engine.responses = [VALID_ROLES_RESPONSE]
         role_id = self.engine.get_farm_role_id("mysql2")
-        self.assertEqual("-q list-roles behaviour=mysql2".split(), self.engine.params)
+        self.assertEqual(["-q list-roles behaviour=mysql2".split()], self.engine.params)
         self.assertEqual(123, role_id)
 
     def test_not_found(self):
-        self.engine.response = EMPTY_ROLES_RESPONSE
+        self.engine.responses = [EMPTY_ROLES_RESPONSE, EMPTY_ROLES_RESPONSE]
         self.assertRaises(autodiscovery.FarmRoleNotFound, self.engine._get_farm_role, "a")
         self.assertRaises(autodiscovery.FarmRoleException, self.engine._get_farm_role, "a")
 
     def test_duplicate(self):
-        self.engine.response = DUPLICATE_ROLES_RESPONSE
+        self.engine.responses = [DUPLICATE_ROLES_RESPONSE, DUPLICATE_ROLES_RESPONSE]
         self.assertRaises(autodiscovery.DuplicateFarmRole, self.engine._get_farm_role, "a")
         self.assertRaises(autodiscovery.FarmRoleException, self.engine._get_farm_role, "a")
 
     def test_get_farm_role_hosts(self):
-        self.engine.response = VALID_ROLES_RESPONSE
+        self.engine.responses = [VALID_ROLES_RESPONSE]
         hosts = self.engine.get_farm_role_hosts("mysql2")
-        self.assertEqual("-q list-roles behaviour=mysql2".split(), self.engine.params)
-        self.assertEqual(2, len(hosts))
+        self.assertEqual(["-q list-roles behaviour=mysql2".split()], self.engine.params)
+        self.assertEqual(3, len(hosts))
         self.assertEqual("1", hosts[0]["index"])
         self.assertEqual("2", hosts[1]["index"])
         self.assertEqual("0", hosts[1]["replication-master"])
 
     def test_get_farm_role_params(self):
-        self.engine.response = FARM_ROLE_PARAMS_RESPONSE
+        self.engine.responses = [FARM_ROLE_PARAMS_RESPONSE]
         params = self.engine.get_farm_role_params("123")
-        self.assertEqual("-q list-farm-role-params farm-role-id=123".split(), self.engine.params)
+        self.assertEqual(["-q list-farm-role-params farm-role-id=123".split()], self.engine.params)
         self.assertEqual("response", params._tree.tag)
 
 
@@ -151,6 +153,19 @@ class RoleParamsTestCase(unittest.TestCase):
 
     def test_exceptions(self):
         self.assertRaises(autodiscovery.NoSuchParam, getattr, self.params, "blah")
+
+
+class ConfigParamsTestCase(unittest.TestCase):
+    def setUp(self):
+        self.engine = TestFarmRoleEngine()
+        self.engine.responses = [VALID_ROLES_RESPONSE, VALID_ROLES_RESPONSE, FARM_ROLE_PARAMS_RESPONSE]
+
+    def test_config(self):
+        config = autodiscovery.prepare_config_files(self.engine)
+        self.assertEqual([
+            ('mysql-username', 'root'), ('mysql-password', 'root_pwd'),
+            ('mysql-master', '10.190.214.199'), ('mysql-slave', '10.157.42.56\n10.160.20.42')
+        ], config)
 
 
 if __name__ == "__main__":
