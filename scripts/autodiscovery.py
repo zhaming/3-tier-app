@@ -44,9 +44,11 @@ class FarmRoleParams(object):
 class FarmRoleEngine(object):
     def _szradm(self, params):
         params = copy.copy(params)
-        params.insert(0, "szradm")
-        out_text = subprocess.check_output(params)
-        return ElementTree.fromstring(out_text)
+        params.insert(0, "/usr/local/bin/szradm")
+        proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.wait():
+            raise FarmRoleException("Unable to access szradm: %s", proc.stderr.read())
+        return ElementTree.parse(proc.stdout)
 
     def _get_farm_role(self, behaviour):
         args = ["-q", "list-roles", "behaviour={0}".format(behaviour)]
