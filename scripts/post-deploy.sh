@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Crash eagerly
+set -e
+
 # Identify the OS
 
 if [ -f /etc/debian_version ]; then

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Crash eagerly
+set -e
+
 mkdir -p /var/config
 
 echo '%username%' > /var/config/mysql-username
