@@ -20,7 +20,7 @@ echo "Identified OS: $OS"
 # Install System Dependencies
 
 if [ "$OS" = "debian" ]; then
-    apt-get install -y python-mysqldb
+    apt-get install -y python-mysqldb python-setuptools
 fi
 
 if [ "$OS" = "redhat" ]; then
