@@ -84,7 +84,7 @@ def prepare_config_files(engine):
     mysql_params = engine.get_farm_role_params(mysql_role_id)
 
     files = []
-    files.append(("mysql-username", "root"))
+    files.append(("mysql-username", "scalr"))
     files.append(("mysql-password", mysql_params.mysql2.root_password))
 
     def hosts_by_replication(replicating):
