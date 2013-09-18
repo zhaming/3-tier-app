@@ -1,34 +1,14 @@
 #!/bin/bash
-
 # Crash eagerly
-set -e
+set -o errexit
+set -o nounset
 
-# Identify the OS
+PID_FILE=/var/run/webapp.pid
 
-if [ -f /etc/debian_version ]; then
-    OS=debian
-elif [ -f /etc/redhat-release ]; then
-    OS=redhat
-else
-    echo "Unsupported OS"
-    exit 1
-fi
+# Kill existing process, if it exists
+kill `cat $PID_FILE` || true
 
-echo "Identified OS: $OS"
-
-
-if [ "$OS" = "debian" ]; then
-    # Remove debian default configuration
-    a2enmod wsgi
-    a2dissite 000-default
-    # Reload Apache
-    service apache2 reload
-fi
-
-if [ "$OS" = "redhat" ]; then
-    # Create an empty directory for Apache's DocumentRoot
-    mkdir /var/www/html
-
-    # Reload Apache
-    service httpd restart
-fi
+# Launch our process
+gunicorn --chdir %remote_path%/app --daemon --pid $PID_FILE --bind 0.0.0.0:8000 \
+  --access-logfile /var/log/webapp.access.log --error-logfile /var/log/webapp.error.log \
+  web:application

@@ -1,7 +1,8 @@
 #!/bin/bash
-
 # Crash eagerly
-set -e
+set -o errexit
+set -o nounset
+
 
 # Identify the OS
 if [ -f /etc/debian_version ]; then
@@ -15,23 +16,22 @@ fi
 
 echo "Identified OS: $OS"
 
-if [ "$OS" = "debian" ]; then
-    apt-get install -y python-mysqldb python-flask libapache2-mod-wsgi
 
-    service apache2 restart
+# Install System Dependencies
+
+if [ "$OS" = "debian" ]; then
+    apt-get install -y python-mysqldb
 fi
 
 if [ "$OS" = "redhat" ]; then
-    yum -y install MySQL-python mod_wsgi
-
-    easy_install pip
-    pip install flask  # Outdated flask in the packages
-
-    # Configure mod_wsgi to use a writabe location
-    echo "WSGISocketPrefix /var/run/wsgi" > /etc/httpd/conf.d/webapp.conf
-
-    service httpd restart
+    yum -y install MySQL-python
 fi
+
+
+# Instal Python Dependencies
+
+easy_install pip
+pip install flask gunicorn
 
 # Remove pre-existing install
 rm -rf %remote_path%
