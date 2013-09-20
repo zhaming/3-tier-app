@@ -23,17 +23,12 @@
     <li>Username: <code>{{ connection_info.username }}</code></li>
     <li>Password: <code>[redacted]</code></li>
     <li>
-        MySQL Master hostname:  <code>{{ connection_info.master.hostname }}</code>
-        <ul>
-        {% for ip in connection_info.master.ips() %}
-            <li>IP: <code>{{ ip }}</code></li>
-        {% endfor %}
-        </ul>
+        MySQL Master IP:  <code>{{ connection_info.master_ip }}</code>
     </li>
     <li>
-        MySQL Slave hostname:  <code>{{ connection_info.slave.hostname }}</code>
+        MySQL Slave IPs:
         <ul>
-        {% for ip in connection_info.slave.ips() %}
+        {% for ip in connection_info.slave_ips %}
             <li>IP: <code>{{ ip }}</code></li>
         {% endfor %}
         </ul>

@@ -15,15 +15,3 @@ class CodingTestCase(test_app.BaseAppTestCase):
 
         r = self.client.get('/')
         self.assertIn(insert, r.data)
-
-
-class SocketResolutionErrorsTestCase(test_db.DBTestCase):
-    def test_no_host(self):
-        """
-        Check that we catch all types of socket error when resolving the IPs
-        for the DB hosts.
-        """
-        for invalid in ("", "example.com"):
-            self.conn_info._master = invalid
-            self.assertEqual(1, len(self.conn_info.master.ips()))
-            self.assertIn("Resolution error", self.conn_info.master.ips()[0])

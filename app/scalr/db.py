@@ -1,5 +1,7 @@
 #coding:utf-8
 import socket
+import random
+
 import MySQLdb
 
 from scalr import exceptions
@@ -36,9 +38,23 @@ class ConnectionInfo(object):
         Get a DB connection to the master or the slaves, depending on the
         `master` variable.
         """
-        return DBConnection(self._master if master else self._slave,
+        return DBConnection(self.master_ip if master else self.slave_ip,
                             self.username, self.password, master,
                             self.database)
+
+    @property
+    def master_ip(self):
+        return self._master
+
+    @property
+    def slave_ips(self):
+        if not self._slave:
+            return [self._master]
+        return self._slave.split()
+
+    @property
+    def slave_ip(self):
+        return random.choice(self.slave_ips)
 
     @property
     def master(self):
@@ -59,7 +75,7 @@ class ConnectionInfo(object):
         Indicate whether the Master Hostname and Slave Hostname resolve to
         something different - in which case we assume we're replicating.
         """
-        return self.master.ips() != self.slave.ips()
+        return bool(self._slave)
 
 
 class DBConnection(object):
@@ -74,16 +90,6 @@ class DBConnection(object):
         self.password = password
         self.master = master
         self.database = database
-
-    def ips(self):
-        """
-        Retrieve the list of IPs corresponding to this DB Connection.
-        """
-
-        try:
-            return sorted(socket.gethostbyname_ex(self.hostname)[2])
-        except socket.error as err:
-            return ('Resolution error: {0}'.format(err[1]),)  # (Rendering)
 
     def get_cursor(self):
         """

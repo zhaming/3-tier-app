@@ -45,64 +45,34 @@ class ConnectionInfoParserTestCase(unittest.TestCase):
         """
         Check that config info interacts well with DB info
         """
-        self.conn_info = config.parse_config(self.test_dir)
-
-        def replicating(x):
-            if x == 'mysql-master':
-                return [x, [], ['10.0.0.1']]
-            else:
-                return [x, [], ['10.0.0.2', '10.0.0.3']]
-
-        with mock.patch('socket.gethostbyname_ex') as gethostbyname_ex:
-            # No replication
-            gethostbyname_ex.return_value = ['example.com', [], ['10.0.0.1']]
-
-            self.assertEqual(self.conn_info.master.ips(),
-                             self.conn_info.slave.ips())
-            self.assert_(not self.conn_info.replicating())
-
-            # Replication
-            gethostbyname_ex.return_value = None
-            gethostbyname_ex.side_effect = replicating
-
-            self.assertNotEqual(self.conn_info.master.ips(),
-                                self.conn_info.slave.ips())
-            self.assert_(self.conn_info.replicating())
+        conn_info = config.parse_config(self.test_dir)
+        self.assertEqual("mysql-master", conn_info.master_ip)
+        self.assertEqual("mysql-slave", conn_info.slave_ip)
+        self.assertEqual(["mysql-slave"], conn_info.slave_ips)
+        self.assertEqual("mysql-username", conn_info.username)
+        self.assertEqual("mysql-password", conn_info.password)
 
 
 class DBConnectionInfoTestCase(unittest.TestCase):
     def setUp(self):
         self.username = 'uname'
         self.password = 'password'
-        self.master = 'master.example.com'
-        self.slave = 'slave.example.com'
+        self.master = '10.10.0.1'
+        self.slaves = '10.10.0.2\n10.10.0.3'
+        self.slave_ips = self.slaves.split()
 
-        self.master_conn_info = db.DBConnection(
-            self.master, self.username, self.password, True)
+    def test_conn_master(self):
+        conn_info = db.ConnectionInfo(self.username, self.password, self.master, [])
 
-        self.slave_conn_info = db.DBConnection(
-            self.slave, self.username, self.password, False)
+        self.assertEqual(self.master, conn_info.master_ip)
+        self.assertEqual(self.master, conn_info.slave_ip)
+        self.assertEqual([self.master], conn_info.slave_ips)
+        self.assertFalse(conn_info.replicating())
 
-    def test_get_ips(self):
-        """
-        Check that we do the correct IP lookups
-        """
-        master_ips = ['10.0.0.1']
-        master_lookup = (self.master, [], master_ips)
-        slave_ips = ['10.0.0.2', '10.0.0.3']
-        slave_lookup = (self.slave, [], slave_ips)
+    def test_conn_slave(self):
+        conn_info = db.ConnectionInfo(self.username, self.password, self.master, self.slaves)
 
-        with mock.patch('socket.gethostbyname_ex') as gethostbyname_ex:
-            # Test lookups that work
-            gethostbyname_ex.return_value = master_lookup
-            self.assertEqual(master_ips, self.master_conn_info.ips())
-
-            gethostbyname_ex.return_value = slave_lookup
-            self.assertEqual(slave_ips, self.slave_conn_info.ips())
-
-            import socket
-            error_message = '[Errno 8] nodename nor servname provided'\
-                            ', or not known'
-            gethostbyname_ex.side_effect = socket.gaierror(8, error_message)
-            self.assertEqual(1, len(self.master_conn_info.ips()))
-            self.assertIn(error_message, self.master_conn_info.ips()[0])
+        self.assertEqual(self.master, conn_info.master_ip)
+        self.assertIn(conn_info.slave_ip, self.slave_ips)
+        self.assertEqual(self.slave_ips, conn_info.slave_ips)
+        self.assertTrue(conn_info.replicating())
