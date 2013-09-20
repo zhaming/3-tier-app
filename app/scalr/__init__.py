@@ -79,6 +79,6 @@ def page_post(connection_info):
 
     value = request.form.get('value')
     connection_info.master.insert(value)
-    flash(u'Your value ({0}) was written to the database!'.format(value),
+    flash(u'Your message ({0}) was written to the database!'.format(value),
           'success')
     return redirect(url_for('page_get'))
