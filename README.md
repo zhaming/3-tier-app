@@ -28,4 +28,4 @@ follow the tutorial.**
 You should not deploy this application on a farm used by any service.
 
 
-[1]: http://wiki.scalr.com/x/X4Ji
+  [1]: http://wiki.scalr.com/x/_RBx
