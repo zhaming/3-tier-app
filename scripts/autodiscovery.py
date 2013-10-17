@@ -112,7 +112,7 @@ def main():
 
     for filename, contents in prepare_config_files(engine):
         with open(os.path.join(config_dir, filename), "w") as f:
-            f.write(contents)
+            f.write(contents or "")
 
 
 if __name__ == "__main__":
