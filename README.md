@@ -5,7 +5,7 @@ Scalr Demo App
 This app
 --------
 
-This is a demo application provided to follow the tutorials from Scalr.
+This is a demo application provided to follow the tutorials from [Scalr][0].
 
 This application is obviously insecure (and useless), and should not be used
 for anything but following the tutorials.
@@ -28,4 +28,5 @@ follow the tutorial.**
 You should not deploy this application on a farm used by any service.
 
 
-  [1]: http://wiki.scalr.com/x/_RBx
+  [0]: http://www.scalr.com
+  [1]: https://scalr-wiki.atlassian.net/wiki/x/XhUb
