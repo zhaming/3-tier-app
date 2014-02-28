@@ -48,8 +48,8 @@ if [ ! -d "$DEPLOY_PATH" ]; then
   git clone --branch $APP_BRANCH $APP_REPO $DEPLOY_PATH
 else
   cd $DEPLOY_PATH
-  git checkout $APP_BRANCH
   git pull
+  git checkout $APP_BRANCH
 fi
 
 
