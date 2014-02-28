@@ -129,8 +129,7 @@ class DBConnection(object):
                            'id MEDIUMINT NOT NULL AUTO_INCREMENT,' 
                            'val CHAR (%s) CHARACTER SET utf8 COLLATE utf8_bin,'
                            'PRIMARY KEY (id)'
-                           ')',
-                           VALUE_LENGTH)
+                           ')', (VALUE_LENGTH,))
 
         else:
             cursor.execute('USE %s' % self.database)
@@ -166,5 +165,5 @@ class DBConnection(object):
 
         cursor = self.get_cursor()
         cursor.execute('INSERT INTO ScalrValues (val) VALUES (%s)',
-                       value[:VALUE_LENGTH].encode('utf-8'))
+                       (value[:VALUE_LENGTH].encode('utf-8'),))
         cursor.execute('COMMIT')
