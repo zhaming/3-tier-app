@@ -9,11 +9,22 @@ import autodiscovery
 VALID_ROLES_RESPONSE = """<?xml version="1.0" ?>
 <response>
     <roles>
+        <role behaviour="base,chef" id="67453" name="base64-ubuntu1204" role-id="38241">
+            <hosts>
+                <host cloud-location="us-east-1" cloud-location-zone="us-east-1a" external-ip="54.81.242.68" index="1" internal-ip="10.164.63.197" status="Running"/>
+                <host cloud-location="us-east-1" cloud-location-zone="us-east-1a" external-ip="107.22.77.170" index="2" internal-ip="10.184.45.97" status="Running"/>
+            </hosts>
+        </role>
         <role behaviour="mysql2,chef" id="123" name="mysql64-ubuntu1204" role-id="456">
             <hosts>
                 <host cloud-location="us-east-1" external-ip="23.22.147.1" index="1" internal-ip="10.190.214.199" replication-master="1" status="Running"/>
                 <host cloud-location="us-east-1" external-ip="54.227.143.73" index="2" internal-ip="10.157.42.56" replication-master="0" status="Running"/>
-                <host cloud-location="us-east-1" external-ip="54.27.18.54" index="2" internal-ip="10.160.20.42" replication-master="0" status="Running"/>
+                <host cloud-location="us-east-1" external-ip="54.27.18.54" index="3" internal-ip="10.160.20.42" replication-master="0" status="Running"/>
+            </hosts>
+        </role>
+        <role behaviour="www" id="67455" name="lb-nginx64-ubuntu1204" role-id="38354">
+            <hosts>
+                <host cloud-location="us-east-1" cloud-location-zone="us-east-1a" external-ip="54.82.61.69" index="1" internal-ip="10.144.157.77" status="Running"/>
             </hosts>
         </role>
     </roles>
@@ -29,10 +40,10 @@ EMPTY_ROLES_RESPONSE = """<?xml version="1.0" ?>
 DUPLICATE_ROLES_RESPONSE = """<?xml version="1.0" ?>
 <response>
     <roles>
-        <role behaviour="mysql2,chef" id="123" name="mysql64-ubuntu1204" role-id="456">
+        <role behaviour="www,chef" id="123" name="app-ubuntu1204" role-id="456">
             <hosts/>
         </role>
-        <role behaviour="mysql2,chef" id="456" name="mysql64-ubuntu1204" role-id="456">
+        <role behaviour="www,chef" id="456" name="app-ubuntu1204" role-id="456">
             <hosts/>
         </role>
     </roles>
@@ -110,7 +121,7 @@ class RoleEngineTestCase(unittest.TestCase):
     def test_ok(self):
         self.engine.responses = [VALID_ROLES_RESPONSE]
         role_id = self.engine.get_farm_role_id("mysql2")
-        self.assertEqual(["-q list-roles behaviour=mysql2".split()], self.engine.params)
+        self.assertEqual(["-q list-roles".split()], self.engine.params)
         self.assertEqual(123, role_id)
 
     def test_not_found(self):
@@ -120,13 +131,13 @@ class RoleEngineTestCase(unittest.TestCase):
 
     def test_duplicate(self):
         self.engine.responses = [DUPLICATE_ROLES_RESPONSE, DUPLICATE_ROLES_RESPONSE]
-        self.assertRaises(autodiscovery.DuplicateFarmRole, self.engine._get_farm_role, "a")
-        self.assertRaises(autodiscovery.FarmRoleException, self.engine._get_farm_role, "a")
+        self.assertRaises(autodiscovery.DuplicateFarmRole, self.engine._get_farm_role, "www")
+        self.assertRaises(autodiscovery.FarmRoleException, self.engine._get_farm_role, "www")
 
     def test_get_farm_role_hosts(self):
         self.engine.responses = [VALID_ROLES_RESPONSE]
         hosts = self.engine.get_farm_role_hosts("mysql2")
-        self.assertEqual(["-q list-roles behaviour=mysql2".split()], self.engine.params)
+        self.assertEqual(["-q list-roles".split()], self.engine.params)
         self.assertEqual(3, len(hosts))
         self.assertEqual("1", hosts[0]["index"])
         self.assertEqual("2", hosts[1]["index"])
@@ -163,7 +174,7 @@ class ConfigParamsTestCase(unittest.TestCase):
     def test_config(self):
         config = autodiscovery.prepare_config_files(self.engine)
         self.assertEqual([
-            ('mysql-username', 'root'), ('mysql-password', 'root_pwd'),
+            ('mysql-username', 'scalr'), ('mysql-password', 'root_pwd'),
             ('mysql-master', '10.190.214.199'), ('mysql-slave', '10.157.42.56\n10.160.20.42')
         ], config)
 

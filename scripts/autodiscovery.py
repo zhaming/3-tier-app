@@ -50,18 +50,28 @@ class FarmRoleEngine(object):
             raise FarmRoleException("Unable to access szradm: %s", proc.stderr.read())
         return ElementTree.parse(proc.stdout)
 
-    def _get_farm_role(self, behaviour):
-        args = ["-q", "list-roles", "behaviour={0}".format(behaviour)]
+    def _get_farm_roles(self, behaviour):
+        args = ["-q", "list-roles"]
         t = self._szradm(args)
-        roles = t.find("roles")
-        role = roles.findall("role")
+        all_roles = t.find("roles")
 
-        if not role:
+        matching_roles = []
+        for role in all_roles:
+            behaviours = role.attrib["behaviour"].split(",")
+            if behaviour in role.attrib["behaviour"]:
+                matching_roles.append(role)
+
+        return matching_roles
+
+    def _get_farm_role(self, behaviour):
+        matching_roles = self._get_farm_roles(behaviour)
+
+        if not matching_roles:
             raise FarmRoleNotFound()
-        elif len(role) > 1:
+        elif len(matching_roles) > 1:
             raise DuplicateFarmRole()
         else:
-            role, = role
+            role, = matching_roles
             return role
 
     def get_farm_role_id(self, behaviour):
