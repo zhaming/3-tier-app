@@ -23,6 +23,7 @@ DEFAULT_PORT=8000
 
 if [ -f /etc/debian_version ]; then
   OS=debian
+  apt-get update
   apt-get install -y git python-mysqldb python-setuptools
 elif [ -f /etc/redhat-release ]; then
   OS=redhat
