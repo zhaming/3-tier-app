@@ -2,6 +2,7 @@
 
 import socket
 import functools
+import logging
 
 from flask import Flask, request, redirect, url_for, flash, render_template
 
@@ -10,6 +11,14 @@ from scalr import config
 
 app = Flask(__name__)
 app.secret_key = 'no_sensitive_data_here'
+app_handler = logging.FileHandler('/tmp/app.log')
+app_handler.setLevel(logging.DEBUG)
+app_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s '
+    '[in %(pathname)s:%(lineno)d]'
+))
+app.logger.addHandler(app_handler)
+
 CONFIG_PATH = '/var/config'
 
 
