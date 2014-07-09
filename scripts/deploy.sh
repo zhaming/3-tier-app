@@ -56,12 +56,13 @@ pip install flask gunicorn
 if [ ! -d "$DEPLOY_PATH" ]; then
   mkdir -p $DEPLOY_PATH
   rm -r $DEPLOY_PATH
-  git clone --branch $APP_BRANCH $APP_REPO $DEPLOY_PATH
+  git clone "${APP_REPO}" "${DEPLOY_PATH}"
 else
   cd $DEPLOY_PATH
-  git pull --all
-  git checkout $APP_BRANCH
+  git fetch
 fi
+
+git checkout "$APP_BRANCH"
 
 
 # Reload the app if it's running, otherwise launch it.
