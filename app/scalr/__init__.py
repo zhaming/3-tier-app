@@ -1,8 +1,10 @@
 #coding:utf-8
 
+import os
 import socket
 import functools
 import logging
+import subprocess
 
 from flask import Flask, request, redirect, url_for, flash, render_template
 
@@ -22,6 +24,23 @@ app.logger.addHandler(app_handler)
 CONFIG_PATH = '/var/config'
 
 
+def find_git_branch():
+    ret = "?"
+    cmd = ["git", "rev-parse", "--abbrev-ref", "HEAD"]
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                cwd=os.path.dirname(__file__))
+        out, err = proc.communicate()
+        retcode = proc.poll()
+        if retcode:  # Nonzero exit code
+            raise subprocess.CalledProcessError(retcode, cmd[0], err)
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    else:
+        ret = out
+    return ret
+
+
 def prepare_page(takes_context=False):
     """
     Decorate the pages with common exception handling / error reporting
@@ -33,6 +52,7 @@ def prepare_page(takes_context=False):
             ctx = {
                 'mountpoint': url_for('page_post'),
                 'hostname': socket.gethostname(),
+                'git_branch': find_git_branch(),
             }
 
             # Do we have connection data?
