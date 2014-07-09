@@ -9,7 +9,6 @@ set -o nounset
 DEFAULT_DEPLOY_PATH=/opt/scalr/webapp
 DEFAULT_APP_REPO=https://github.com/scalr-tutorials/3-tier-app.git
 DEFAULT_APP_BRANCH=master
-DEFAULT_PID_FILE=/var/run/webapp.pid
 DEFAULT_PORT=8000
 
 
@@ -20,8 +19,12 @@ DEFAULT_PORT=8000
 : ${DEPLOY_PATH:="$DEFAULT_DEPLOY_PATH"}
 : ${APP_REPO:="$DEFAULT_APP_REPO"}
 : ${APP_BRANCH:="$DEFAULT_APP_BRANCH"}
-: ${PID_FILE:="$DEFAULT_PID_FILE"}
 : ${PORT:="$DEFAULT_PORT"}
+
+
+# Generate the PID file name based on the app port
+
+PID_FILE="/var/run/webapp.${PORT}.pid"
 
 
 # Install system dependencies
@@ -30,10 +33,10 @@ DEFAULT_PORT=8000
 if [ -f /etc/debian_version ]; then
   OS=debian
   apt-get update
-  apt-get install -y git python-mysqldb python-setuptools
+  apt-get install -y git python-mysqldb python-setuptools curl
 elif [ -f /etc/redhat-release ]; then
   OS=redhat
-  yum -y install git MySQL-python
+  yum -y install git MySQL-python curl
 else
     echo "Unsupported OS"
     exit 1
@@ -56,20 +59,28 @@ if [ ! -d "$DEPLOY_PATH" ]; then
   git clone --branch $APP_BRANCH $APP_REPO $DEPLOY_PATH
 else
   cd $DEPLOY_PATH
-  git pull
+  git pull --all
   git checkout $APP_BRANCH
 fi
 
 
-# If any existing app processes are alive, kill them
+# Reload the app if it's running, otherwise launch it.
 
-kill `cat $PID_FILE 2>/dev/null` || true
-
-
-# Launch the app
-gunicorn --chdir $DEPLOY_PATH/app --daemon --pid $PID_FILE --bind 0.0.0.0:$PORT \
+kill -s HUP `cat $PID_FILE 2>/dev/null` || {
+  gunicorn --chdir $DEPLOY_PATH/app --daemon --pid $PID_FILE --bind 0.0.0.0:$PORT \
   --access-logfile /var/log/webapp.access.log --error-logfile /var/log/webapp.error.log \
   web:application
+}
 
+
+# Give the app some time to come up, and check it is indeed running
+
+sleep 5
+curl --fail --head --location "http://127.0.0.1:$PORT"
+
+
+# Exit with a success
 
 echo "Started Webapp - listening on $PORT"
+
+exit 0

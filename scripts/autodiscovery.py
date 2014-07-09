@@ -153,8 +153,11 @@ def prepare_config_files(engine):
     # servers and tell the master from the slaves
     def hosts_by_replication(replicating):
         replicating = "1" if replicating else "0"
-        f = lambda host: host["replication-master"] == replicating
-        hosts = filter(f, mysql_hosts)
+        replication_filter = lambda host: host["replication-master"] == replicating
+
+        running_filter = lambda host: host["status"] == "Running"
+
+        hosts = filter(running_filter, filter(replication_filter, mysql_hosts))
         return "\n".join([host["internal-ip"] for host in hosts])
 
     # Create a configuration file with the MySQL master's IP
