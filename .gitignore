@@ -1,3 +1,4 @@
 app/.vagrant
 app/.coverage
+app/.tox
 *.pyc
