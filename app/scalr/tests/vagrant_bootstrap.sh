@@ -3,7 +3,7 @@
 MYSQL_PASSWORD=APP_TEST_PASSWORD
 
 # Install requirements
-sudo apt-get update 
+sudo apt-get update
 sudo apt-get install -q -y python-mysqldb python-flask
 
 # Set test credentials for MySQL

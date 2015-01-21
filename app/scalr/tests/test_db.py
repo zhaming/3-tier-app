@@ -1,5 +1,6 @@
 #coding:utf-8
-import MySQLdb
+from __future__ import unicode_literals
+import pymysql
 import unittest
 import warnings
 
@@ -21,7 +22,7 @@ class DBConnectionFailureTestCase(DBTestCase):
         """
         self.conn_info._master = "invalid"
         conn = self.conn_info.master
-        self.assertRaises(exceptions.NoHost, conn.get_cursor)
+        self.assertRaises(exceptions.NoConnectionEstablished, conn.get_cursor)
 
     def test_invalid_credentials(self):
         """
@@ -29,7 +30,7 @@ class DBConnectionFailureTestCase(DBTestCase):
         """
         self.conn_info.username = "invalid"
         conn = self.conn_info.master
-        self.assertRaises(exceptions.InvalidCredentials, conn.get_cursor)
+        self.assertRaises(exceptions.NoConnectionEstablished, conn.get_cursor)
 
     def test_invalid_password(self):
         """
@@ -37,7 +38,7 @@ class DBConnectionFailureTestCase(DBTestCase):
         """
         self.conn_info.password = "invalid"
         conn = self.conn_info.master
-        self.assertRaises(exceptions.InvalidCredentials, conn.get_cursor)
+        self.assertRaises(exceptions.NoConnectionEstablished, conn.get_cursor)
 
 
 class DBInstructionsTestCase(DBTestCase):
@@ -48,7 +49,7 @@ class DBInstructionsTestCase(DBTestCase):
         self.slave_conn = self.conn_info.slave
 
         self._destroy_test_database()
-        warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+        warnings.filterwarnings('ignore', category=pymysql.Warning)
 
     def tearDown(self):
         warnings.resetwarnings()
@@ -58,7 +59,7 @@ class DBInstructionsTestCase(DBTestCase):
         """
         Bypass our cursor wrapper methods to talk directly to the DB
         """
-        connection = MySQLdb.connect(
+        connection = pymysql.connect(
             host=self.conn_info._master, user=self.conn_info.username,
             passwd=self.conn_info.password)
 
@@ -70,7 +71,7 @@ class DBInstructionsTestCase(DBTestCase):
             # Any changes are removed
             cursor.execute('DROP DATABASE %s' % self.conn_info.database)
             cursor.execute('COMMIT')
-        except MySQLdb.OperationalError:  # DB wasn't created
+        except pymysql.InternalError:  # DB wasn't created
             pass
 
     def test_create_database(self):

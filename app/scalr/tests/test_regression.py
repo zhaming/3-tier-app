@@ -1,7 +1,8 @@
 #coding:utf-8
+from __future__ import unicode_literals
 
 from scalr.tests import test_app
-from scalr.tests import test_db
+
 
 class CodingTestCase(test_app.BaseAppTestCase):
     def test_coding(self):
@@ -13,5 +14,6 @@ class CodingTestCase(test_app.BaseAppTestCase):
         r = self.client.post('/', data={'value': insert})
         self.assertEqual(r.status_code, 302)
 
+
         r = self.client.get('/')
-        self.assertIn(insert, r.data)
+        self.assertIn(insert, r.data.decode('utf-8'))

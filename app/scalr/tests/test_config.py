@@ -1,4 +1,5 @@
 #coding:utf-8
+from __future__ import unicode_literals
 import unittest
 import mock
 import tempfile
@@ -18,7 +19,7 @@ class ConnectionInfoParserTestCase(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
-        for fname, attr in config.CONFIG_STRUCTURE:
+        for fname, attr in config.FILE_CONFIG_STRUCTURE:
             with open(os.path.join(self.test_dir, fname), 'w') as f:
                 f.write(fname)
 
@@ -31,15 +32,14 @@ class ConnectionInfoParserTestCase(unittest.TestCase):
         """
         conf = config.parse_config(self.test_dir)
 
-        for fname, attr in config.CONFIG_STRUCTURE:
+        for fname, attr in config.FILE_CONFIG_STRUCTURE:
             self.assertEqual(getattr(conf, attr), fname)
 
     def test_invalid_config(self):
         """
         Check that we handle invalid configs
         """
-        self.assertRaises(exceptions.NoConnectionInfo, config.parse_config,
-                          '/wrongpath')
+        self.assertEqual(None, config.parse_config('/wrongpath'))
 
     def test_to_db_connection(self):
         """

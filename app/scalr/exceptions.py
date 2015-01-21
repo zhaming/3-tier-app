@@ -1,10 +1,5 @@
 #coding:utf-8
-
-
-class NoConnectionInfo(Exception):
-    """
-    Raised when connection info hasn't been made available
-    """
+from __future__ import unicode_literals
 
 
 class NoConnectionEstablished(Exception):
@@ -15,17 +10,3 @@ class NoConnectionEstablished(Exception):
         super(NoConnectionEstablished, self).__init__()
         self.connection_info = connection_info
         self.error = error
-
-
-class NoHost(NoConnectionEstablished):
-    """
-    Raised when we try to connect to an non-existing Host.
-    """
-    pass
-
-
-class InvalidCredentials(NoConnectionEstablished):
-    """
-    Raised when our credentials are refused by the MySQL host.
-    """
-    pass

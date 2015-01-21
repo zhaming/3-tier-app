@@ -1,8 +1,8 @@
 #coding:utf-8
-import socket
+from __future__ import unicode_literals
 import random
 
-import MySQLdb
+import pymysql
 
 from scalr import exceptions
 
@@ -12,6 +12,7 @@ DEFAULT_DB = "ScalrTest"
 MYSQL_ERROR_CODE_UNKNOWN_DB = 1049
 MYSQL_ERROR_UNKNOWN_TABLE = 1146
 MYSQL_ERROR_CODE_NO_HOST = 2005
+MYSQL_ERROR_CODE_NO_CONNECTION = 2003
 MYSQL_ERROR_CODE_ACCESS_DENIED = 1045
 
 MYSQL_ERROR_MSG = "A MySQL error occurred: The MySQL Error Code was [{0}]"
@@ -98,23 +99,13 @@ class DBConnection(object):
         """
 
         try:
-            connection = MySQLdb.connect(host=self.hostname,
+            connection = pymysql.connect(host=self.hostname,
                                          user=self.username,
                                          passwd=self.password,
                                          charset='utf8')
 
-        except MySQLdb.MySQLError as err:
-            error_code = err[0]
-
-            if error_code == MYSQL_ERROR_CODE_NO_HOST:
-                msg = u'The host [{0}] does not exist.'.format(self.hostname)
-                raise exceptions.NoHost(self, msg)
-
-            if error_code == MYSQL_ERROR_CODE_ACCESS_DENIED:
-                msg = u'The username [{0}] or password [{1}] is incorrect.'\
-                      .format(self.username, 'redacted')
-                raise exceptions.InvalidCredentials(self, msg)
-
+        except pymysql.MySQLError as err:
+            error_code = err.args[0]
             msg = MYSQL_ERROR_MSG.format(error_code)
             raise exceptions.NoConnectionEstablished(self, msg)
 
@@ -147,8 +138,8 @@ class DBConnection(object):
             cursor = self.get_cursor()
             cursor.execute('SELECT val FROM ScalrValues ORDER BY id DESC')
 
-        except MySQLdb.MySQLError as err:
-            error_code = err[0]
+        except pymysql.MySQLError as err:
+            error_code = err.args[0]
             if error_code in (MYSQL_ERROR_CODE_UNKNOWN_DB,
                               MYSQL_ERROR_UNKNOWN_TABLE):
                 return []  # We lazily create the DB and table here.
@@ -156,7 +147,7 @@ class DBConnection(object):
             raise exceptions.NoConnectionEstablished(self, msg)
 
         else:
-            return [value[0].decode('utf-8') for value in cursor.fetchall()]
+            return [value[0] for value in cursor.fetchall()]
 
     def insert(self, value):
         """

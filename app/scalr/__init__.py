@@ -1,4 +1,5 @@
 #coding:utf-8
+from __future__ import unicode_literals
 
 import os
 import socket
@@ -55,10 +56,9 @@ def prepare_page(takes_context=False):
                 'git_branch': find_git_branch(),
             }
 
-            # Do we have connection data?
-            try:
-                connection_info = config.parse_config(CONFIG_PATH)
-            except exceptions.NoConnectionInfo:
+            # Do we have configuration?
+            connection_info = config.load_config_from_env() or config.parse_config(CONFIG_PATH)
+            if connection_info is None:
                 flash(u'MySQL connection information is unavailable', 'error')
                 return render_template('config_error.html', **ctx)
 
