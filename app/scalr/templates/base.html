@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Scalr Demo App</title>
+        <title>华云PaaS演示应用</title>
         <link type="text/css" href="/static/css/bootstrap.css" rel="stylesheet">
         <link type="text/css" href="/static/css/bootstrap-responsive.css" rel="stylesheet">
         <link type="image/x-icon" href="/static/img/favicon.ico" rel="shortcut icon" />
@@ -11,10 +11,9 @@
     <body>
         <div class="hero-unit">
            <img src="/static/img/scalr-logo.png" alt="Scalr Logo" class="pull-left"/>
-           <h1>Welcome to Scalr!</h1>
-           <p>This is the Scalr Demo App. You submit data, it writes it to the MySQL master, and then
-              reads it from the MySQL slave.</p>
-           <p>Current branch: <code>{{ git_branch }}</code></p>
+           <h1>欢迎您使用华云PaaS！</h1>
+           <p>这是华云PaaS演示应用。您提交数据，系统会将数据写入MySQL主库中，而数据读取则会从MySQL从库中获取。</p>
+           <p>当前分支：<code>{{ git_branch }}</code></p>
         </div>
         {% for category, message in get_flashed_messages(with_categories=true) %}
           <div class="alert {% if category %}alert-{{ category }}{% endif %}">
@@ -37,9 +36,9 @@
 
             {% block info %}
             {% endblock %}
-            <h2>Server Information</h2>
+            <h2>系统信息</h2>
             <ul>
-                <li>Hostname of this App Server: <code>{{ hostname }}</code></li>
+                <li>此应用所在服务器主机名： <code>{{ hostname }}</code></li>
             </ul>
 
         </div>
