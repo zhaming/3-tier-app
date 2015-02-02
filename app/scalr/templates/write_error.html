@@ -1,8 +1,8 @@
 {% extends 'form.html' %}
 
 {% block form %}
-<h2>Here's why we couldn't write:</h2>
-<p><span class="badge badge-important">!</span> The error was: <code class="error">{{ error }}</code></p>
-<p>Check your configuration below, then <a href="/">try again</a></p>
-<p><small class="muted">You might want to fix this by running the <code>autodiscovery.py</code> script.</small></p>
+<h2>不能写的原因:</h2>
+<p><span class="badge badge-important">!</span> 错误: <code class="error">{{ error }}</code></p>
+<p>请确认以下配置, 然后 <a href="/">重试</a></p>
+<p><small class="muted">你可能要通过运行 <code>autodiscovery.py</code> 脚本来解决.</small></p>
 {% endblock form %}

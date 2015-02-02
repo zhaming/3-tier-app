@@ -1,16 +1,16 @@
 {% extends 'form.html' %}
 
 {% block data %}
-<h2>Reading Messages (from MySQL slaves)</h2>
-<p>What you write will be echoed here!</p>
+<h2>正在读取信息 (从 MySQL 的从服务器)</h2>
+<p>你写的内容将会在这里!</p>
 <ul>
   {% for value in values %}
     <li>{{ value }}</li>
   {% else %}
-    <li><span class="badge badge-warning">!</span> There's no data in your database yet. Start adding some!</li>
+    <li><span class="badge badge-warning">!</span> 你的数据库中还没有数据. 开始添加数据!</li>
   {% endfor %}
   {% if values %}
-  <p><small class="muted">The data you added last is shown first.</small></p>
+  <p><small class="muted">最后添加的数据显示在最前面.</small></p>
   {% endif %}
 </ul>
 {% endblock data %}

@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block form %}
-<h2>Write a new Message (to the MySQL Master)</h2>
-<p>Use this form to submit Messages to the database.</p>
+<h2>写一条新信息 (到 MySQL 的主服务器)</h2>
+<p>使用此表单提交信息到数据库。</p>
 
 <form action="{{ mountpoint }}" method="post" class="form-inline">
     <fieldset>
         <div class="input-append">"
-            <input autofocus="autofocus" autocomplete="off" name="value" type="text" placeholder="Write something here!"/>
-            <input type="submit" class="btn btn-success" value="Save it!"/>
+            <input autofocus="autofocus" autocomplete="off" name="value" type="text" placeholder="请在这里输入!"/>
+            <input type="submit" class="btn btn-success" value="保存!"/>
         </div>
     </fieldset>
 </form>
@@ -18,15 +18,15 @@
 {% endblock data %}
 
 {% block info %}
-<h2>MySQL Configuration Information</h2>
+<h2>MySQL 配置信息</h2>
 <ul>
-    <li>Username: <code>{{ connection_info.username }}</code></li>
-    <li>Password: <code>[redacted]</code></li>
+    <li>用户名: <code>{{ connection_info.username }}</code></li>
+    <li>密码: <code>[redacted]</code></li>
     <li>
-        MySQL Master IP:  <code>{{ connection_info.master_ip }}</code>
+        MySQL 主服务器 IP:  <code>{{ connection_info.master_ip }}</code>
     </li>
     <li>
-        MySQL Slave IPs:
+        MySQL 从服务器 IP:
         <ul>
         {% for ip in connection_info.slave_ips %}
             <li>IP: <code>{{ ip }}</code></li>
@@ -35,9 +35,9 @@
     </li>
     <li>
     {% if connection_info.replicating() %}
-      Replication is active!
+      复制状态活跃!
     {% else %}
-      <span class="badge badge-warning">!</span> Replication is not active yet. Launch another MySQL instance!
+      <span class="badge badge-warning">!</span> 复制状态不活跃. 启动另一个 MySQL 实例!
     {% endif %}
     </li>
 </ul>
